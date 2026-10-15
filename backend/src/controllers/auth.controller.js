@@ -3,51 +3,70 @@ import tokenBlackListModel from "../models/blackList.model.js";
 import jwt from "jsonwebtoken";
 
 /**
- * User register controller
- * POST /api/auth/register
+ * - User register controller
+ * - POST /api/auth/register
  */
 const userRegisterController = async (req, res) => {
-    const { email, password, name } = req.body;
+    try {
+        const { email, password, name } = req.body;
 
-    const isExists = await userModel.findOne({ email });
+        const isExists = await userModel.findOne({ email });
 
-    if (isExists) {
-        return res.status(409).json({
-            message: "User already exists",
+        if (isExists) {
+            return res.status(409).json({
+                message: "User already exists",
+                status: "failed"
+            });
+        }
+
+        const user = await userModel.create({
+            email,
+            password,
+            name
+        });
+
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "3d" }
+        );
+
+        res.cookie("token", token);
+
+        return res.status(201).json({
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: user.name
+            },
+            token,
+            message: "User registered successfully",
+            status: "success"
+        });
+
+    } catch (error) {
+        
+        if (error.name === "ValidationError") {
+            const message = Object.values(error.errors)
+                .map(err => err.message)
+                .join(", ");
+
+            return res.status(400).json({
+                message,
+                status: "failed"
+            });
+        }
+
+        return res.status(500).json({
+            message: "Internal server error",
             status: "failed"
         });
     }
-
-    const user = await userModel.create({
-        email,
-        password,
-        name
-    });
-
-    const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: "3d" }
-    );
-
-    res.cookie("token", token);
-
-    res.status(201).json({
-        user: {
-            _id: user._id,
-            email: user.email,
-            name: user.name
-        },
-        token,
-        message: "User registered successfully",
-        status: "success"
-    });
-
 };
 
 /**
- * User login controller
- * POST /api/auth/login
+ * - User login controller
+ * - POST /api/auth/login
  */
 const userLoginController = async (req, res) => {
     const { email, password } = req.body;
@@ -78,7 +97,7 @@ const userLoginController = async (req, res) => {
 
     res.cookie("token", token);
 
-    res.status(200).json({
+    return res.status(200).json({
         user: {
             _id: user._id,
             email: user.email,
@@ -91,10 +110,10 @@ const userLoginController = async (req, res) => {
 };
 
 /**
- * User logout controller
- * POST /api/auth/logout
- * Invalidate the token by adding it to the blacklist
- * Clear the token cookie
+ * - User logout controller
+ * - POST /api/auth/logout
+ * - Invalidate the token by adding it to the blacklist
+ * - Clear the token cookie
  */
 const userLogoutController = async (req, res) => {
     const token =
@@ -103,7 +122,8 @@ const userLogoutController = async (req, res) => {
 
     if (!token) {
         return res.status(400).json({
-            message: "Token not found"
+            message: "Token not found",
+            status: "failed"
         });
     }
 
@@ -114,7 +134,8 @@ const userLogoutController = async (req, res) => {
     res.clearCookie("token");
 
     return res.status(200).json({
-        message: "User logged out successfully"
+        message: "User logged out successfully",
+        status: "success"
     });
 };
 
