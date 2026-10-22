@@ -13,12 +13,16 @@ const productRouter = express.Router();
 productRouter.post("/register", uploadProductImages, authMiddleware.systemAuthMiddleware, productController.addProductController);
 
 /** @route GET /api/product */
-productRouter.get("/", productController.getAllProductController);
+productRouter.get("/", productController.getProductController);
 
-/** @route DELETE /api/product/productId */
-productRouter.delete("/:productId", productController.deleteProductController);
+/** 
+ * - @route DELETE /api/product/:productId 
+ * - Protected route
+ * - Only system users/admin can remove products
+*/
+productRouter.delete("/:productId", authMiddleware.systemAuthMiddleware, productController.deleteProductController);
 
-/** @route GET /api/product/productId */
+/** @route GET /api/product/:productId */
 productRouter.get("/:productId", productController.getProductByIdController);
 
 export default productRouter;
