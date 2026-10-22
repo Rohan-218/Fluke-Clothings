@@ -1,19 +1,24 @@
 import express from "express";
 import * as productController from "../controllers/product.controller.js";
-import uploadProductImages from "../middleware/multer.middleware.js"
+import uploadProductImages from "../middleware/multer.middleware.js";
+import * as authMiddleware from "../middleware/auth.middleware.js";
 
-const router = express.Router();
+const productRouter = express.Router();
 
-/** @route POST /api/product */
-router.post("/register", uploadProductImages, productController.addProductController);
+/**
+ * - @route POST /api/product
+ * - Protected route
+ * - Only system users/admin can add new products
+ */
+productRouter.post("/register", uploadProductImages, authMiddleware.systemAuthMiddleware, productController.addProductController);
 
 /** @route GET /api/product */
-router.get("/", productController.getAllProductController);
+productRouter.get("/", productController.getAllProductController);
 
 /** @route DELETE /api/product/productId */
-router.delete("/:productId", productController.deleteProductController);
+productRouter.delete("/:productId", productController.deleteProductController);
 
 /** @route GET /api/product/productId */
-router.get("/:productId", productController.getProductByIdController);
+productRouter.get("/:productId", productController.getProductByIdController);
 
-export default router;
+export default productRouter;
