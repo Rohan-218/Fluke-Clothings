@@ -3,7 +3,9 @@ import cors from 'cors';
 import 'dotenv/config';
 import connectDB from './config/mongodb.js';
 import connectCloudinary from './config/cloudinary.js';
+
 import authRouter from './routes/auth.routes.js';
+import productRouter from './routes/product.routes.js';
 
 // App config
 const app = express();
@@ -23,8 +25,10 @@ app.get('/', (req,res) => {
 /**
  * - API routes
  * - /api/auth for authentication related routes (register, login, logout)
+ * - /api/product
 */
 app.use("/api/auth", authRouter);
+app.use("/api/product", productRouter)
 
 
 app.listen(port, () => {
