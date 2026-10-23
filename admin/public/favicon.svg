@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" role="img" aria-labelledby="title desc">
+  <title id="title">FLUKE favicon</title>
+  <desc id="desc">Purple FLUKE F mark on a dark rounded-square background.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#120026"/>
+      <stop offset="55%" stop-color="#170033"/>
+      <stop offset="100%" stop-color="#090014"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0.12" y1="0.08" x2="0.88" y2="0.92">
+      <stop offset="0%" stop-color="#C05CFF"/>
+      <stop offset="48%" stop-color="#9B38FF"/>
+      <stop offset="100%" stop-color="#6818FF"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1254" height="1254" rx="260" fill="url(#bg)"/>
+  <g transform="translate(258,356)">
+    <path d="M 765.00,1.00 L 763.00,0.00 L 759.00,1.00 L 756.00,0.00 L 755.00,1.00 L 754.00,0.00 L 250.00,0.00 L 235.00,2.00 L 217.00,7.00 L 185.00,23.00 L 166.00,38.00 L 147.00,59.00 L 137.00,74.00 L 126.00,97.00 L 68.00,300.00 L 64.00,318.00 L 58.00,336.00 L 0.00,547.00 L 128.00,547.00 L 163.00,418.00 L 167.00,399.00 L 172.00,384.00 L 183.00,338.00 L 185.00,336.00 L 543.00,336.00 L 639.00,215.00 L 214.00,215.00 L 213.00,211.00 L 227.00,158.00 L 233.00,147.00 L 243.00,137.00 L 254.00,131.00 L 261.00,129.00 L 664.00,129.00 Z" fill="url(#mark)"/>
+  </g>
+</svg>
