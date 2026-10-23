@@ -1,7 +1,7 @@
 ````markdown
 # Fluke (E-Com)
 
-Fluke is a modern e-commerce storefront built with React and Vite. It is designed to showcase products, manage shopping cart behavior, and provide a clean foundation for a checkout experience.
+Fluke is a modern e-commerce application built using the MERN stack. It features product listings, shopping cart management, and a foundation for the checkout process.
 
 ## Overview
 
