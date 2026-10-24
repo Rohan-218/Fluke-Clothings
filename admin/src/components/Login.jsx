@@ -1,8 +1,9 @@
-import axios from 'axios';
-import React, { useState } from 'react';
-import { backendUrl } from '../App';
+import axios from "axios";
+import React, { useState } from "react";
+import { backendUrl } from "../App";
+import { toast } from "react-toastify";
 
-const Login = ({setToken}) => {
+const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -10,21 +11,33 @@ const Login = ({setToken}) => {
     e.preventDefault();
 
     try {
-      console.log("Sending login request...");
 
       const response = await axios.post(
-        backendUrl + "/api/auth/login",
-        { email, password }
+        `${backendUrl}/api/auth/login`,
+        {
+          email: email.trim(),
+          password,
+        }
       );
 
-			if (response.data.success) {
-				setToken(response.data.token);
-			} else {
-				
-			}
-
+      if (response.data.status === "success") {
+        setIsAuthenticated(true);
+        toast.success(response.data.message || "Login successful");
+      } else {
+        toast.error(response.data.message || "Login failed");
+      }
     } catch (error) {
-      console.error("Error response:", error.response?.data);
+      console.error("Login error:", error);
+
+      if (error.response) {
+        toast.error(
+          error.response.data?.message || "Login failed"
+        );
+      } else if (error.request) {
+        toast.error("Unable to connect to the server.");
+      } else {
+        toast.error(error.message || "Something went wrong");
+      }
     }
   };
 
@@ -62,10 +75,7 @@ const Login = ({setToken}) => {
             />
           </div>
 
-          <button
-            className="mt-2 w-full py-2 px-4 rounded-md text-white bg-black"
-            type="submit"
-          >
+          <button className="mt-2 w-full py-2 px-4 rounded-md text-white bg-black disabled:opacity-50" type="submit" >
             Login
           </button>
         </form>

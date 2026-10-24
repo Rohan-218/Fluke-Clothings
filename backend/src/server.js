@@ -17,9 +17,12 @@ connectDB();
 connectCloudinary();
 
 // middlewares
+app.use(cors({
+    origin: process.env.VITE_ADMIN_URL,
+    credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
 
 // Test API
 app.get('/', (req,res) => {
