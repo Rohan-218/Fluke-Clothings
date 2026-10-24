@@ -48,7 +48,7 @@ const App = () => {
         <Login setIsAuthenticated={setIsAuthenticated} />
       ) : (
         <>
-          <Navbar />
+          <Navbar setIsAuthenticated={setIsAuthenticated} />
           <hr />
 
           <div className="flex w-full">
