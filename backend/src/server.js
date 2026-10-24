@@ -18,8 +18,13 @@ connectCloudinary();
 
 // middlewares
 app.use(cors({
-    origin: process.env.VITE_ADMIN_URL,
-    credentials: true
+  origin: [
+    "http://localhost:5174",
+    "http://192.168.29.241:5174"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -38,6 +43,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/product", productRouter)
 
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
     console.log("Server is running on port : "+ port);
 });
