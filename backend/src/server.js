@@ -19,8 +19,8 @@ connectCloudinary();
 // middlewares
 app.use(cors({
   origin: [
-    "http://localhost:5174",
-    "http://192.168.29.241:5174"
+    process.env.VITE_ADMIN_URL,
+    process.env.VITE_FRONTEND_URL
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
