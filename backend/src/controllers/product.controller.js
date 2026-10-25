@@ -198,7 +198,7 @@ const deleteProductController = async (req, res) => {
     await productModel.findByIdAndDelete(productId);
 
     return res.status(200).json({
-      message: "Product and Cloudinary images deleted successfully.",
+      message: "Product deleted successfully.",
       status: "success"
     });
   } catch (error) {
