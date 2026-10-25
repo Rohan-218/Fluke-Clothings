@@ -6,7 +6,7 @@ import * as authMiddleware from "../middleware/auth.middleware.js";
 const productRouter = express.Router();
 
 /**
- * - @route POST /api/product
+ * - @route POST /api/product/register
  * - Protected route
  * - Only system users/admin can add new products
  */

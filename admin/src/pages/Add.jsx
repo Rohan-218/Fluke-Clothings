@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import axios from "axios";
 import { assets } from '../assets/assets';
+import { backendUrl } from "../App";
+import { toast } from "react-toastify";
 
 const Add = () => {
 
@@ -16,8 +19,72 @@ const Add = () => {
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState([]);
 
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+
+    try {
+      const formData = new FormData();
+
+      // Append product images
+      if (image1) formData.append("image1", image1);
+      if (image2) formData.append("image2", image2);
+      if (image3) formData.append("image3", image3);
+      if (image4) formData.append("image4", image4);
+
+      // Append product details
+      const productData = {
+        name,
+        description,
+        price,
+        category,
+        subCategory,
+        sizes: JSON.stringify(sizes),
+        bestseller
+      };
+
+      Object.entries(productData).forEach(([key, value]) => {
+        formData.append(key, value);
+      }); 
+
+      const response = await axios.post(
+        `${backendUrl}/api/product/register`,
+        formData
+      );
+
+      if (response.data.status === "success") {
+        toast.success(response.data.message || "Product added successfully");
+
+        // Reset form fields
+        setImage1(false);
+        setImage2(false);
+        setImage3(false);
+        setImage4(false);
+        setName("");
+        setDescription("");
+        setPrice("");
+        setCategory("Men");
+        setSubCategory("Topwear");
+        setBestseller(false);
+        setSizes([]);
+      } else {
+        toast.error(response.data.message || "Failed to add product");
+      }
+    } catch (error) {
+      console.error("Add product error:", error);
+
+      if (error.response) {
+        toast.error(
+          error.response.data?.message || "Failed to add product"
+        );
+      } else if (error.request) {
+        toast.error("Unable to connect to the server.");
+      } else {
+        toast.error(error.message || "Something went wrong");
+      }
+    }
+  };
   return (
-    <form className="flex flex-col w-full items-start gap-3">
+    <form onSubmit={onSubmitHandler} className="flex flex-col w-full items-start gap-3">
       <div>
         <p className="mb-2">Upload Image</p>
 
@@ -82,34 +149,34 @@ const Add = () => {
       <div>
         <p className="mb-2">Product sizes</p>
         <div className="flex gap-3">
-          <div>
-            <p className="bg-slate-200 px-3 py-1 cursor-pointer">S</p>
+          <div onClick={() => setSizes(prev => prev.includes("S") ? prev.filter(item => item !== "S") : [...prev,"S"])}>
+            <p className={`${sizes.includes("S") ? "bg-blue-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>S</p>
           </div>
 
-          <div>
-            <p className="bg-slate-200 px-3 py-1 cursor-pointer">M</p>
+          <div onClick={() => setSizes(prev => prev.includes("M") ? prev.filter(item => item !== "M") : [...prev,"M"])}>
+            <p className={`${sizes.includes("M") ? "bg-blue-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>M</p>
           </div>
 
-          <div>
-            <p className="bg-slate-200 px-3 py-1 cursor-pointer">L</p>
+          <div onClick={() => setSizes(prev => prev.includes("L") ? prev.filter(item => item !== "L") : [...prev,"L"])}>
+            <p className={`${sizes.includes("L") ? "bg-blue-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>L</p>
           </div>
 
-          <div>
-            <p className="bg-slate-200 px-3 py-1 cursor-pointer">XL</p>
+          <div onClick={() => setSizes(prev => prev.includes("XL") ? prev.filter(item => item !== "XL") : [...prev,"XL"])}>
+            <p className={`${sizes.includes("XL") ? "bg-blue-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>XL</p>
           </div>
 
-          <div>
-            <p className="bg-slate-200 px-3 py-1 cursor-pointer">XXL</p>
+          <div onClick={() => setSizes(prev => prev.includes("XXL") ? prev.filter(item => item !== "XXL") : [...prev,"XXL"])}>
+            <p className={`${sizes.includes("XXL") ? "bg-blue-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>XXL</p>
           </div>
         </div>
       </div>
 
       <div className="flex gap-2 mt-2">
-        <input type="checkbox" id="bestseller" />
+        <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id="bestseller" />
         <label className="cursor-pointer" htmlFor="bestseller">Add to bestseller</label>
       </div>
 
-      <button className="w-28 py-3 mt-4 bg-[#c0eff6] border border-[#b2baf9]" type="submit">ADD</button>
+      <button className="w-28 py-3 mt-4 bg-black text-white" type="submit">ADD</button>
 
     </form>
   );
