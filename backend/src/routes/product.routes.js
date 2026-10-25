@@ -12,8 +12,8 @@ const productRouter = express.Router();
  */
 productRouter.post("/register", uploadProductImages, authMiddleware.systemAuthMiddleware, productController.addProductController);
 
-/** @route GET /api/product */
-productRouter.get("/", productController.getProductController);
+/** @route GET /api/product/list */
+productRouter.get("/list", productController.getProductController);
 
 /** 
  * - @route DELETE /api/product/:productId 
