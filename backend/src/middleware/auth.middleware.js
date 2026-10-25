@@ -76,7 +76,7 @@ const systemAuthMiddleware = async (req, res, next) => {
 
         if (!user.systemUser) {
             return res.status(403).json({
-                message: "Access denied, not a system user"
+                message: "Access denied. Admin privileges required."
             });
         }
 
