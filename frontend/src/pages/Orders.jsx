@@ -1,46 +1,66 @@
-import React, { useContext } from 'react';
+import React, { useContext } from "react";
 import { ShopContext } from "../context/ShopContext";
-import Title from '../components/Title';
+import Title from "../components/Title";
 
 const Orders = () => {
+  const { products, cartItems, currency } = useContext(ShopContext);
 
-  const { products, currency } = useContext(ShopContext);
+  const orderItems = Object.keys(cartItems).flatMap((itemId) => {
+    const product = products.find(
+      (item) => String(item._id) === String(itemId)
+    );
+
+    if (!product) return [];
+
+    const productImage = Array.isArray(product.image)
+      ? product.image[0]
+      : product.image;
+
+    return Object.entries(cartItems[itemId])
+      .filter(([, quantity]) => Number(quantity) > 0)
+      .map(([size, quantity]) => ({
+        ...product,
+        productImage,
+        size,
+        quantity: Number(quantity),
+      }));
+  });
 
   return (
     <div className="border-t pt-16">
-
       <div className="text-2xl">
         <Title text1={"MY"} text2={"ORDERS"} />
       </div>
 
       <div>
-        {
-          products.slice(1,4).map((item, index) => (
-            <div key={index} className="py-4 border-t border-btext-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4" >
+        {orderItems.length === 0 ? (
+          <p className="py-10 text-gray-500">No items to display.</p>
+        ) : (
+          orderItems.map((item, index) => (
+            <div key={`${item._id}-${item.size}`} className="py-4 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-start gap-6 text-sm">
-                <img className="w-16 sm:w-20" src={item.image[0]} alt={item.name} />
+                <img className="w-16 sm:w-20" src={item.productImage} alt={item.name} />
                 <div>
                   <p className="sm:text-base font-medium">{item.name}</p>
                   <div className="flex items-center gap-3 mt-2 text-base text-gray-700">
-                    <p className="text-lg">{currency}{item.price}</p>
-                    <p>Quantity: 1</p>
-                    <p>Size: M</p>
+                    <p className="text-lg">{currency}{Number(item.price).toFixed(2)}</p>
+                    <p>Quantity: {item.quantity}</p>
+                    <p>Size: {item.size}</p>
                   </div>
-                  <p className="mt-2">Date: <span className="text-gray-400">Dec 14, 2025</span></p>
+                  <p className="mt-2">Date: <span className="text-gray-400">—</span></p>
                 </div>
               </div>
               <div className="md:w-1/2 flex justify-between">
                 <div className="flex items-center gap-2">
                   <p className="min-w-2 h-2 rounded-full bg-green-500"></p>
-                  <p className="text-sm md:text-base">Ready to ship</p>
+                  <p className="text-sm md:text-base">In cart</p>
                 </div>
                 <button className="border px-4 py-2 text-sm font-medium rounded-sm">Track Order</button>
               </div>
             </div>
           ))
-        }
+        )}
       </div>
-      
     </div>
   );
 };
