@@ -8,8 +8,22 @@ import { toast } from 'react-toastify';
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
+
   const { backendUrl, showSearch, setShowSearch, getCartCount, isAuthenticated, setIsAuthenticated, authLoading } = useContext(ShopContext);
+
   const navigate = useNavigate();
+
+  const handleProfileClick = () => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      setProfileVisible(false);
+      navigate('/login');
+      return;
+    }
+
+    setProfileVisible((previous) => !previous);
+  };
 
   const handleLogout = async () => {
     try {
@@ -51,30 +65,24 @@ const Navbar = () => {
         <img onClick={() => setShowSearch(!showSearch)} src={assets.search_icon} className="w-5 cursor-pointer" alt="Search" />
 
         <div className="group relative">
-          <img onClick={() => setProfileVisible(!profileVisible)} src={assets.profile_icon} className="w-5 cursor-pointer" alt="Profile" />
-          <div className={`absolute dropdown-menu right-0 pt-4 z-50 ${profileVisible ? 'block' : 'hidden'} sm:group-hover:block sm:hidden`}>
-            <div className="flex flex-col gap-3 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded shadow-md">
-              {!authLoading && isAuthenticated && (
-                <>
-                  <p className="cursor-pointer hover:text-black">My Profile</p>
-                  <p className="cursor-pointer hover:text-black">Orders</p>
-                </>
-              )}
-              {!authLoading && (isAuthenticated ? (
+          <img onClick={handleProfileClick} src={assets.profile_icon} className="w-5 cursor-pointer" alt="Profile" />
+
+          {isAuthenticated && (
+            <div className={`absolute dropdown-menu right-0 pt-4 z-50 ${profileVisible ? 'block' : 'hidden'} sm:group-hover:block sm:hidden`}>
+              <div className="flex flex-col gap-3 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded shadow-md">
+                <p onClick={() => { setProfileVisible(false); navigate('/profile'); }} className="cursor-pointer hover:text-black">My Profile</p>
+                <p onClick={() => { setProfileVisible(false); navigate('/orders'); }} className="cursor-pointer hover:text-black">Orders</p>
                 <p onClick={handleLogout} className="cursor-pointer text-red-600 hover:text-red-800">Logout</p>
-              ) : (
-                <Link to="/login" onClick={() => setProfileVisible(false)}>
-                  <p className="cursor-pointer text-green-600 hover:text-green-800">Login</p>
-                </Link>
-              ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <Link to='/cart' className='relative'>
           <img src={assets.cart_icon} className="w-5 min-w-5" alt="Cart" />
           <p className='absolute -right-1.25 -bottom-1.25 w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]'>{getCartCount()}</p>
         </Link>
+
         <img onClick={() => setVisible(true)} src={assets.menu_icon} className="w-5 cursor-pointer sm:hidden" alt="Menu" />
       </div>
 

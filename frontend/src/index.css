@@ -40,6 +40,10 @@ a.active hr{
   font-style: normal;
 }
 
+.Toastify__toast-container--top-right {
+  top: 90px !important;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }

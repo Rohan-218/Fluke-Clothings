@@ -43,7 +43,7 @@ const App = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={3000} />
 
       {!isAuthenticated ? (
         <Login setIsAuthenticated={setIsAuthenticated} />
