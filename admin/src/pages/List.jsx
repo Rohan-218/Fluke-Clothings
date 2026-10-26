@@ -1,28 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useLocation } from "react-router-dom";
 import { backendUrl, currency } from "../App";
 
 const List = () => {
 
+  const location = useLocation();
   const [list, setList] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchList = async () => {
-
     try {
-    const response = await axios.get(`${backendUrl}/api/product/list`);
-    
+      const response = await axios.get(
+        `${backendUrl}/api/product/list`
+      );
+
       if (response.data.status === "success") {
         setList(response.data.products);
       } else {
-        toast.error(response.data.message || "Failed to fetch products");
+        toast.error(
+          response.data.message || "Failed to fetch products"
+        );
       }
     } catch (error) {
       console.error("Fetch products error:", error);
 
       if (error.response) {
         toast.error(
-          error.response.data?.message || "Failed to fetch products"
+          error.response.data?.message ||
+            "Failed to fetch products"
         );
       } else if (error.request) {
         toast.error("Unable to connect to the server.");
@@ -30,7 +38,6 @@ const List = () => {
         toast.error(error.message || "Something went wrong");
       }
     }
-
   };
 
   const removeProduct = async (productId) => {
@@ -40,39 +47,157 @@ const List = () => {
       );
 
       if (response.data.status === "success") {
-        toast.success(response.data.message || "Product deleted successfully");
+        setList((prev) =>
+          prev.filter((item) => item._id !== productId)
+        );
 
-        setList((prev) => prev.filter((item) => item._id !== productId));
-      } else {
-        toast.error(response.data.message || "Failed to delete product");
+        setSelectedProducts((prev) =>
+          prev.filter((id) => id !== productId)
+        );
+
+        toast.success(
+          response.data.message || "Product deleted successfully"
+        );
+
+        return true;
       }
+
+      toast.error(
+        response.data.message || "Failed to delete product"
+      );
+
+      return false;
     } catch (error) {
       console.error("Delete product error:", error);
 
-      if (error.response) {
-        toast.error(
-          error.response.data?.message || "Failed to delete product"
+      toast.error(
+        error.response?.data?.message ||
+          (error.request
+            ? "Unable to connect to the server."
+            : error.message || "Something went wrong")
+      );
+
+      return false;
+    }
+  };
+
+  const toggleProduct = (productId) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === list.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(list.map((item) => item._id));
+    }
+  };
+
+  const deleteSelectedProducts = async () => {
+    if (selectedProducts.length === 0) {
+      toast.info("Please select at least one product.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedProducts.length} selected product(s)?`
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+
+    try {
+      
+      const results = await Promise.allSettled(
+        selectedProducts.map(async (productId) => {
+          const response = await axios.delete(
+            `${backendUrl}/api/product/${productId}`
+          );
+
+          if (response.data.status !== "success") {
+            throw new Error(
+              response.data.message || "Failed to delete product"
+            );
+          }
+
+          return productId;
+        })
+      );
+
+      const deletedIds = results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
+
+      const failedCount = results.length - deletedIds.length;
+
+      setList((prev) =>
+        prev.filter((item) => !deletedIds.includes(item._id))
+      );
+
+      setSelectedProducts((prev) =>
+        prev.filter((id) => !deletedIds.includes(id))
+      );
+
+      if (deletedIds.length > 0) {
+        toast.success(
+          `${deletedIds.length} product(s) deleted successfully.`
         );
-      } else if (error.request) {
-        toast.error("Unable to connect to the server.");
-      } else {
-        toast.error(error.message || "Something went wrong");
       }
+
+      if (failedCount > 0) {
+        toast.error(
+          `${failedCount} product(s) could not be deleted.`
+        );
+      }
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      toast.error("Something went wrong while deleting products.");
+    } finally {
+      setDeleting(false);
     }
   };
 
   useEffect(() => {
     fetchList();
-  },[]);
+  }, [location.pathname]);
+
+  const allSelected =
+    list.length > 0 &&
+    selectedProducts.length === list.length;
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-lg font-semibold">Product List</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-lg font-semibold">Product List</p>
+
+        <button
+          type="button"
+          onClick={deleteSelectedProducts}
+          disabled={selectedProducts.length === 0 || deleting}
+          className="rounded bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {deleting
+            ? "Deleting..."
+            : `Delete Selected (${selectedProducts.length})`}
+        </button>
+      </div>
 
       <div className="flex flex-col gap-2">
-
-        {/* List Table Title */}
-        <div className="hidden md:grid grid-cols-[0.5fr_2fr_1fr_1fr_0.5fr] items-center py-3 px-3 border bg-gray-100 text-sm">
+        {/* Table Header */}
+        <div className="hidden md:grid md:grid-cols-[40px_0.5fr_2fr_1fr_1fr_0.5fr] items-center gap-3 border bg-gray-100 px-3 py-3 text-sm">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleSelectAll}
+            aria-label="Select all products"
+            disabled={list.length === 0 || deleting}
+            className="h-4 w-4 cursor-pointer accent-red-500"
+          />
           <b>Image</b>
           <b>Name</b>
           <b>Category</b>
@@ -80,38 +205,69 @@ const List = () => {
           <b className="text-center">Action</b>
         </div>
 
-        {/* Product List */}
         {list.map((item) => (
           <div
             key={item._id}
-            className="grid grid-cols-[64px_minmax(0,1fr)_auto] sm:grid-cols-[80px_minmax(0,2fr)_1fr_auto] md:grid-cols-[0.5fr_2fr_1fr_1fr_0.5fr] items-center gap-3 sm:gap-4 py-3 px-2 sm:px-3 border rounded-md text-sm"
+            className="grid grid-cols-[24px_56px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border px-2 py-3 text-sm sm:grid-cols-[28px_64px_minmax(0,2fr)_1fr_auto] sm:gap-3 sm:px-3 md:grid-cols-[40px_0.5fr_2fr_1fr_1fr_0.5fr]"
           >
-            {/* Image */}
+            {/* Selection Checkbox */}
+            <input
+              type="checkbox"
+              checked={selectedProducts.includes(item._id)}
+              onChange={() => toggleProduct(item._id)}
+              disabled={deleting}
+              aria-label={`Select ${item.name}`}
+              className="h-4 w-4 cursor-pointer accent-red-500"
+            />
+
+            {/* Product Image */}
             <img
-              className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded"
+              className="h-12 w-12 rounded object-cover sm:h-16 sm:w-16"
               src={item.image?.[0]}
               alt={item.name}
             />
 
-            {/* Name and mobile details */}
+            {/* Name and Mobile Details */}
             <div className="min-w-0">
-              <p className="font-medium text-gray-800 wrap-break-word">{item.name}</p>
+              <p className="wrap-break-word font-medium text-gray-800">
+                {item.name}
+              </p>
 
-              <p className="text-xs text-gray-500 mt-1 md:hidden">{item.category}</p>
+              <p className="mt-1 text-xs text-gray-500 md:hidden">
+                {item.category}
+              </p>
 
-              <p className="text-xs text-gray-600 mt-1 md:hidden">{currency}{item.price}</p>
+              <p className="mt-1 text-xs text-gray-600 md:hidden">
+                {currency}
+                {item.price}
+              </p>
             </div>
 
-            {/* Category: tablet and desktop */}
-            <p className="hidden md:block truncate">{item.category}</p>
+            {/* Category */}
+            <p className="hidden truncate md:block">
+              {item.category}
+            </p>
 
-            {/* Price: desktop */}
-            <p className="hidden md:block">{currency}{item.price}</p>
+            {/* Price */}
+            <p className="hidden md:block">
+              {currency}
+              {item.price}
+            </p>
 
+            {/* Individual Delete */}
             <button
-              onClick={() => removeProduct(item._id)}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Are you sure you want to delete "${item.name}"?`
+                  )
+                ) {
+                  removeProduct(item._id);
+                }
+              }}
               type="button"
-              className="text-red-500 hover:text-red-700 font-semibold text-lg px-2 cursor-pointer"
+              disabled={deleting}
+              className="px-2 text-lg font-semibold text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={`Delete ${item.name}`}
             >
               X
@@ -120,7 +276,7 @@ const List = () => {
         ))}
 
         {list.length === 0 && (
-          <p className="text-center text-gray-500 py-8">
+          <p className="py-8 text-center text-gray-500">
             No products found.
           </p>
         )}
