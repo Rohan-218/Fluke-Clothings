@@ -9,6 +9,7 @@ import connectCloudinary from './config/cloudinary.js';
 
 import authRouter from './routes/auth.routes.js';
 import productRouter from './routes/product.routes.js';
+import cartRouter from './routes/cart.routes.js';
 
 // App config
 const app = express();
@@ -35,12 +36,14 @@ app.get('/', (req,res) => {
 });
 
 /**
- * - API routes
- * - /api/auth for authentication related routes (register, login, logout)
- * - /api/product
-*/
+ * API routes
+ * /api/auth    - Authentication-related routes (register, login, logout, check authentication)
+ * /api/product - Product-related routes (add, list, update, delete products)
+ * /api/cart    - Cart-related routes (add product, update product quantity, get user cart)
+ */
 app.use("/api/auth", authRouter);
-app.use("/api/product", productRouter)
+app.use("/api/product", productRouter);
+app.use("/api/cart", cartRouter);
 
 
 app.listen(port, "0.0.0.0", () => {

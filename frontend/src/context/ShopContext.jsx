@@ -5,41 +5,6 @@ import { toast } from "react-toastify";
 
 export const ShopContext = createContext();
 
-const getCartFromCookie = () => {
-  try {
-    const cartCookie = document.cookie
-      .split("; ")
-      .find((cookie) => cookie.startsWith("cartItems="));
-
-    if (!cartCookie) return {};
-
-    const cartData = JSON.parse(
-      decodeURIComponent(cartCookie.substring("cartItems=".length))
-    );
-
-    return cartData &&
-      typeof cartData === "object" &&
-      !Array.isArray(cartData)
-      ? cartData
-      : {};
-  } catch (error) {
-    console.error("Error reading cart cookie:", error);
-    return {};
-  }
-};
-
-const saveCartToCookie = (cartItems) => {
-  try {
-    const encodedCart = encodeURIComponent(JSON.stringify(cartItems));
-    const secure =
-      window.location.protocol === "https:" ? "; Secure" : "";
-
-    document.cookie = `cartItems=${encodedCart}; Max-Age=2592000; Path=/; SameSite=Lax${secure}`;
-  } catch (error) {
-    console.error("Error saving cart cookie:", error);
-  }
-};
-
 const ShopContextProvider = ({ children }) => {
   const currency = "₹";
   const delivery_fee = 70;
@@ -49,14 +14,42 @@ const ShopContextProvider = ({ children }) => {
   const [productsLoading, setProductsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [cartItems, setCartItems] = useState(() => getCartFromCookie());
+  const [cartItems, setCartItems] = useState({});
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [cartLoading, setCartLoading] = useState(false);
 
   const navigate = useNavigate();
 
+  // Get the authenticated user's cart from the backend
+  const fetchUserCart = useCallback(async () => {
+    setCartLoading(true);
+
+    try {
+      const response = await axios.get(`${backendUrl}/api/cart`, {
+        withCredentials: true,
+      });
+
+      if (response.data.success) {
+        setCartItems(response.data.cartData || {});
+      } else {
+        toast.error(response.data.message || "Failed to load cart");
+      }
+    } catch (error) {
+      console.error("Fetch cart error:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to load your cart"
+      );
+    } finally {
+      setCartLoading(false);
+    }
+  }, [backendUrl]);
+
+  // Check authentication and load the user's cart
   const checkAuth = useCallback(async () => {
+    setAuthLoading(true);
+
     try {
       const response = await axios.get(`${backendUrl}/api/auth/me`, {
         withCredentials: true,
@@ -65,19 +58,29 @@ const ShopContextProvider = ({ children }) => {
       const authenticated = response.data.status === "success";
 
       setIsAuthenticated(authenticated);
+
+      if (authenticated) {
+        await fetchUserCart();
+      } else {
+        setCartItems({});
+      }
+
       return authenticated;
     } catch (error) {
       setIsAuthenticated(false);
+      setCartItems({});
       return false;
     } finally {
       setAuthLoading(false);
     }
-  }, [backendUrl]);
+  }, [backendUrl, fetchUserCart]);
 
+  // Check login status when the app loads
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -105,11 +108,8 @@ const ShopContextProvider = ({ children }) => {
     fetchProducts();
   }, [backendUrl]);
 
-  useEffect(() => {
-    saveCartToCookie(cartItems);
-  }, [cartItems]);
-
-  const addToCart = (itemId, size) => {
+  // Add a product and its selected size to the cart
+  const addToCart = async (itemId, size) => {
     if (authLoading) {
       toast.info("Checking your login status. Please try again.");
       return;
@@ -117,55 +117,89 @@ const ShopContextProvider = ({ children }) => {
 
     if (!isAuthenticated) {
       toast.info("Please log in to add products to your cart.");
+      navigate("/login");
       return;
     }
 
     if (!size) {
-      toast.error("Please select a size before adding to cart", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.error("Please select a size before adding to cart");
       return;
     }
 
-    setCartItems((previous) => {
-      const cartData = structuredClone(previous);
+    try {
+      const response = await axios.post(
+        `${backendUrl}/api/cart/add`,
+        { itemId, size },
+        { withCredentials: true }
+      );
 
-      if (cartData[itemId]) {
-        cartData[itemId][size] =
-          (Number(cartData[itemId][size]) || 0) + 1;
-      } else {
-        cartData[itemId] = { [size]: 1 };
+      if (!response.data.success) {
+        toast.error(response.data.message || "Failed to add product");
+        return;
       }
 
-      return cartData;
-    });
+      if (response.data.cartData) {
+        setCartItems(response.data.cartData);
+      } else {
+        await fetchUserCart();
+      }
 
-    toast.success("Product added to cart");
+      toast.success("Product added to cart");
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to add product to cart"
+      );
+    }
   };
 
-  const updateQuantity = (itemId, size, quantity) => {
-    setCartItems((previous) => {
-      const cartData = structuredClone(previous);
+  // Update quantity or remove a product-size combination
+  const updateQuantity = async (itemId, size, quantity) => {
+    if (!isAuthenticated) {
+      toast.info("Please log in to update your cart.");
+      return;
+    }
 
-      if (!cartData[itemId] || !cartData[itemId][size]) {
-        return previous;
+    const parsedQuantity = Number(quantity);
+
+    if (
+      !Number.isInteger(parsedQuantity) ||
+      parsedQuantity < 0
+    ) {
+      toast.error("Please enter a valid quantity");
+      return;
+    }
+
+    try {
+      const response = await axios.patch(
+        `${backendUrl}/api/cart/update`,
+        {
+          itemId,
+          size,
+          quantity: parsedQuantity,
+        },
+        { withCredentials: true }
+      );
+
+      if (!response.data.success) {
+        toast.error(response.data.message || "Failed to update cart");
+        return;
       }
 
-      if (quantity <= 0) {
-        delete cartData[itemId][size];
-
-        if (Object.keys(cartData[itemId]).length === 0) {
-          delete cartData[itemId];
-        }
+      if (response.data.cartData) {
+        setCartItems(response.data.cartData);
       } else {
-        cartData[itemId][size] = Math.floor(Number(quantity));
+        await fetchUserCart();
       }
-
-      return cartData;
-    });
+    } catch (error) {
+      console.error("Update cart error:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to update cart"
+      );
+    }
   };
 
+  // Calculate total quantity of all products in the cart
   const getCartCount = () => {
     let totalCount = 0;
 
@@ -178,6 +212,7 @@ const ShopContextProvider = ({ children }) => {
     return totalCount;
   };
 
+  // Calculate cart subtotal
   const getCartAmount = () => {
     let totalAmount = 0;
 
@@ -216,7 +251,9 @@ const ShopContextProvider = ({ children }) => {
     getCartAmount,
     isAuthenticated,
     authLoading,
+    cartLoading,
     checkAuth,
+    fetchUserCart,
     setIsAuthenticated,
   };
 
