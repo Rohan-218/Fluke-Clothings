@@ -21,7 +21,7 @@ const Login = ({ setIsAuthenticated }) => {
         }
       );
 
-      if (response.data.status === "success") {
+      if (response.data.success === true) {
         setIsAuthenticated(true);
         toast.success(response.data.message || "Login successful");
       } else {

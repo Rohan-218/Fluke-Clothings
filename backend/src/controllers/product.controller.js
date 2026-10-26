@@ -3,16 +3,18 @@ import { v2 as cloudinary } from 'cloudinary';
 import productModel from "../models/product.model.js";
 
 /**
- * - Product register controller
- * - POST /api/product/register
+ * @route POST /api/product/register
+ * @desc Register a new product
  */
-const addProductController = async (req,res) => {
+const addProductController = async (req, res) => {
     try {
-
         const { name, description, price, category, subCategory, sizes, bestseller } = req.body;
-        
-        if (!name || !description || !price || !category || !subCategory || !sizes ) {
-            return res.status(400).json({ message: "Missing required fields" });
+
+        if (!name || !description || !price || !category || !subCategory || !sizes) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields"
+            });
         }
 
         const image1 = req.files?.image1?.[0] || null;
@@ -25,16 +27,16 @@ const addProductController = async (req,res) => {
         if (images.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'At least one product image is required'
+                message: "At least one product image is required"
             });
         }
 
-        let imagesUrl = await Promise.all(
+        const imagesUrl = await Promise.all(
             images.map(async (item) => {
-                let result = await cloudinary.uploader.upload(item.path, {resource_type:'image'});
+                const result = await cloudinary.uploader.upload(item.path, { resource_type: 'image' });
                 return result.secure_url;
             })
-        )
+        );
 
         const product = await productModel.create({
             name,
@@ -46,27 +48,31 @@ const addProductController = async (req,res) => {
             image: imagesUrl,
             bestseller
         });
-        
+
         return res.status(201).json({
+            success: true,
             product: {
                 _id: product._id,
                 name: product.name,
                 bestseller: product.bestseller,
                 image: product.image
             },
-            message: "Product added successfully",
-            status: "success"
+            message: "Product added successfully"
         });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Add product error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to add product"
+        });
     }
-    
 };
 
 /**
- * - Product listing controller
- * - GET /api/product/list
+ * @route GET /api/product/list
+ * @desc Retrieve all products
  */
 const getProductController = async (req, res) => {
     try {
@@ -85,144 +91,33 @@ const getProductController = async (req, res) => {
         }));
 
         return res.status(200).json({
+            success: true,
             products: formattedProducts,
-            message: "Products retrieved successfully",
-            status: "success"
+            message: "Products retrieved successfully"
         });
 
     } catch (error) {
+        console.error("Get products error:", error);
+
         return res.status(500).json({
-            message: "Failed to retrieve products",
-            status: "error"
+            success: false,
+            message: "Failed to retrieve products"
         });
     }
 };
 
 /**
- * - Product deleting controller
- * - DELETE /api/product/:productId
+ * @route DELETE /api/product/:productId
+ * @desc Delete a product and its Cloudinary images
  */
 const deleteProductController = async (req, res) => {
-  try {
-    const { productId } = req.params;
-
-    if (!mongoose.isValidObjectId(productId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid product ID",
-      });
-    }
-
-    const product = await productModel.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    const failedImages = [];
-
-    // Delete images from Cloudinary
-    for (const imageUrl of product.image ?? []) {
-      try {
-        const url = new URL(imageUrl);
-        const parts = url.pathname.split("/").filter(Boolean);
-        const uploadIndex = parts.indexOf("upload");
-
-        if (uploadIndex === -1) {
-          console.error("Invalid Cloudinary URL:", imageUrl);
-          failedImages.push(imageUrl);
-          continue;
-        }
-
-        // Get everything after /upload/
-        const assetParts = parts.slice(uploadIndex + 1);
-
-        // Remove transformation segments, if present
-        while (
-          assetParts.length > 0 &&
-          /^(?:[a-z]_[^/]+|[a-z]{1,3}_[^/]+)(?:,.*)?$/.test(assetParts[0]) &&
-          !/^v\d+$/.test(assetParts[0])
-        ) {
-          assetParts.shift();
-        }
-
-        // Remove version number, e.g. v1723456789
-        if (assetParts.length > 0 && /^v\d+$/.test(assetParts[0])) {
-          assetParts.shift();
-        }
-
-        // Remove file extension from the final segment
-        if (assetParts.length > 0) {
-          assetParts[assetParts.length - 1] =
-            assetParts[assetParts.length - 1].replace(/\.[^.]+$/, "");
-        }
-
-        const publicId = decodeURIComponent(assetParts.join("/"));
-
-        if (!publicId) {
-          console.error("Could not extract public ID:", imageUrl);
-          failedImages.push(imageUrl);
-          continue;
-        }
-
-        console.log("Deleting Cloudinary public ID:", publicId);
-
-        const result = await cloudinary.uploader.destroy(publicId, {
-          resource_type: "image",
-          invalidate: true,
-        });
-
-        console.log("Cloudinary deletion result:", result);
-
-        if (result.result !== "ok") {
-          failedImages.push(imageUrl);
-        }
-      } catch (error) {
-        console.error("Image deletion error:", error.message);
-        failedImages.push(imageUrl);
-      }
-    }
-
-    // Don't delete the database record if an image failed to delete
-    if (failedImages.length > 0) {
-      return res.status(500).json({
-        status: "error",
-        message: "Some Cloudinary images could not be deleted.",
-        failedImages,
-      });
-    }
-
-    await productModel.findByIdAndDelete(productId);
-
-    return res.status(200).json({
-      message: "Product deleted successfully.",
-      status: "success"
-    });
-  } catch (error) {
-    console.error("Delete product error:", error);
-
-    return res.status(500).json({
-      status: "error",
-      message: "Failed to delete product.",
-    });
-  }
-};
-
-/**
- * - Get product by ID
- * - GET /api/product/:productId
- */
-const getProductByIdController = async (req, res) => {
     try {
         const { productId } = req.params;
 
         if (!mongoose.isValidObjectId(productId)) {
             return res.status(400).json({
-                message: "Invalid product ID",
-                status: "error"
+                success: false,
+                message: "Invalid product ID"
             });
         }
 
@@ -230,12 +125,120 @@ const getProductByIdController = async (req, res) => {
 
         if (!product) {
             return res.status(404).json({
-                message: "Product not found",
-                status: "error"
+                success: false,
+                message: "Product not found"
+            });
+        }
+
+        const failedImages = [];
+
+        for (const imageUrl of product.image ?? []) {
+            try {
+                const url = new URL(imageUrl);
+                const parts = url.pathname.split("/").filter(Boolean);
+                const uploadIndex = parts.indexOf("upload");
+
+                if (uploadIndex === -1) {
+                    console.error("Invalid Cloudinary URL:", imageUrl);
+                    failedImages.push(imageUrl);
+                    continue;
+                }
+
+                const assetParts = parts.slice(uploadIndex + 1);
+
+                while (
+                    assetParts.length > 0 &&
+                    /^(?:[a-z]_[^/]+|[a-z]{1,3}_[^/]+)(?:,.*)?$/.test(assetParts[0]) &&
+                    !/^v\d+$/.test(assetParts[0])
+                ) {
+                    assetParts.shift();
+                }
+
+                if (assetParts.length > 0 && /^v\d+$/.test(assetParts[0])) {
+                    assetParts.shift();
+                }
+
+                if (assetParts.length > 0) {
+                    assetParts[assetParts.length - 1] = assetParts[assetParts.length - 1].replace(/\.[^.]+$/, "");
+                }
+
+                const publicId = decodeURIComponent(assetParts.join("/"));
+
+                if (!publicId) {
+                    console.error("Could not extract public ID:", imageUrl);
+                    failedImages.push(imageUrl);
+                    continue;
+                }
+
+                console.log("Deleting Cloudinary public ID:", publicId);
+
+                const result = await cloudinary.uploader.destroy(publicId, {
+                    resource_type: "image",
+                    invalidate: true
+                });
+
+                console.log("Cloudinary deletion result:", result);
+
+                if (result.result !== "ok" && result.result !== "not found") {
+                    failedImages.push(imageUrl);
+                }
+            } catch (error) {
+                console.error("Image deletion error:", error.message);
+                failedImages.push(imageUrl);
+            }
+        }
+
+        if (failedImages.length > 0) {
+            return res.status(500).json({
+                success: false,
+                message: "Some Cloudinary images could not be deleted.",
+                failedImages
+            });
+        }
+
+        await productModel.findByIdAndDelete(productId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Product deleted successfully."
+        });
+
+    } catch (error) {
+        console.error("Delete product error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete product."
+        });
+    }
+};
+
+/**
+ * @route GET /api/product/:productId
+ * @desc Retrieve a product by ID
+ */
+const getProductByIdController = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!mongoose.isValidObjectId(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid product ID"
+            });
+        }
+
+        const product = await productModel.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found"
             });
         }
 
         return res.status(200).json({
+            success: true,
             product: {
                 _id: product._id,
                 name: product.name,
@@ -247,16 +250,15 @@ const getProductByIdController = async (req, res) => {
                 subCategory: product.subCategory,
                 sizes: product.sizes
             },
-            message: "Product retrieved successfully",
-            status: "success"
+            message: "Product retrieved successfully"
         });
 
     } catch (error) {
         console.error("Get product by ID error:", error);
 
         return res.status(500).json({
-            message: "Failed to retrieve product",
-            status: "error"
+            success: false,
+            message: "Failed to retrieve product"
         });
     }
 };
@@ -266,4 +268,4 @@ export {
     getProductController,
     deleteProductController,
     getProductByIdController
-}; 
+};

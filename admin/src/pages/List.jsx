@@ -17,7 +17,7 @@ const List = () => {
         `${backendUrl}/api/product/list`
       );
 
-      if (response.data.status === "success") {
+      if (response.data.success === true) {
         setList(response.data.products);
       } else {
         toast.error(
@@ -46,7 +46,7 @@ const List = () => {
         `${backendUrl}/api/product/${productId}`
       );
 
-      if (response.data.status === "success") {
+      if (response.data.success === true) {
         setList((prev) =>
           prev.filter((item) => item._id !== productId)
         );
@@ -119,7 +119,7 @@ const List = () => {
             `${backendUrl}/api/product/${productId}`
           );
 
-          if (response.data.status !== "success") {
+          if (response.data.success === false) {
             throw new Error(
               response.data.message || "Failed to delete product"
             );

@@ -55,7 +55,7 @@ const ShopContextProvider = ({ children }) => {
         withCredentials: true,
       });
 
-      const authenticated = response.data.status === "success";
+      const authenticated = response.data.success === true;
 
       setIsAuthenticated(authenticated);
 
@@ -88,7 +88,7 @@ const ShopContextProvider = ({ children }) => {
           `${backendUrl}/api/product/list`
         );
 
-        if (response.data.status === "success") {
+        if (response.data.success === true) {
           setProducts(response.data.products || []);
         } else {
           toast.error(

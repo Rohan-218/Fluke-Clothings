@@ -3,8 +3,8 @@ import tokenBlackListModel from "../models/blackList.model.js";
 import jwt from "jsonwebtoken";
 
 /**
- * - User register controller
- * - POST /api/auth/register
+ * @route POST /api/auth/register
+ * @desc Register a new user
  */
 const userRegisterController = async (req, res) => {
     try {
@@ -14,8 +14,8 @@ const userRegisterController = async (req, res) => {
 
         if (isExists) {
             return res.status(409).json({
-                message: "User already exists",
-                status: "failed"
+                success: false,
+                message: "User already exists"
             });
         }
 
@@ -39,39 +39,40 @@ const userRegisterController = async (req, res) => {
         });
 
         return res.status(201).json({
+            success: true,
             user: {
                 _id: user._id,
                 email: user.email,
                 name: user.name
             },
             token,
-            message: "User registered successfully",
-            status: "success"
+            message: "User registered successfully"
         });
 
     } catch (error) {
-        
         if (error.name === "ValidationError") {
             const message = Object.values(error.errors)
                 .map(err => err.message)
                 .join(", ");
 
             return res.status(400).json({
-                message,
-                status: "failed"
+                success: false,
+                message
             });
         }
 
+        console.error("Registration error:", error);
+
         return res.status(500).json({
-            message: "Internal server error",
-            status: "failed"
+            success: false,
+            message: "Internal server error"
         });
     }
 };
 
 /**
- * - User login controller
- * - POST /api/auth/login
+ * @route POST /api/auth/login
+ * @desc Log in an existing user
  */
 const userLoginController = async (req, res) => {
     try {
@@ -81,8 +82,8 @@ const userLoginController = async (req, res) => {
 
         if (!user) {
             return res.status(401).json({
-                message: "Invalid credentials",
-                status: "failed"
+                success: false,
+                message: "Invalid credentials"
             });
         }
 
@@ -90,8 +91,8 @@ const userLoginController = async (req, res) => {
 
         if (!isValidPassword) {
             return res.status(401).json({
-                message: "Invalid credentials",
-                status: "failed"
+                success: false,
+                message: "Invalid credentials"
             });
         }
 
@@ -109,50 +110,43 @@ const userLoginController = async (req, res) => {
         });
 
         return res.status(200).json({
+            success: true,
             user: {
                 _id: user._id,
                 email: user.email,
                 name: user.name
             },
             token,
-            message: "User logged in successfully",
-            status: "success"
+            message: "User logged in successfully"
         });
 
     } catch (error) {
         console.error("Login error:", error);
 
         return res.status(500).json({
-            message: "Internal server error",
-            status: "failed"
+            success: false,
+            message: "Internal server error"
         });
     }
 };
 
-
 /**
- * - User logout controller
- * - POST /api/auth/logout
- * - Invalidate the token by adding it to the blacklist
- * - Clear the token cookie
+ * @route POST /api/auth/logout
+ * @desc Log out a user and invalidate the token
  */
 const userLogoutController = async (req, res) => {
     try {
-        const token =
-            req.cookies?.token ||
-            req.headers.authorization?.split(" ")[1];
+        const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
 
         if (!token) {
             return res.status(400).json({
-                message: "Token not found",
-                status: "failed"
+                success: false,
+                message: "Token not found"
             });
         }
 
-        // Add token to blacklist
         await tokenBlackListModel.create({ token });
 
-        // Clear the token cookie
         res.clearCookie("token", {
             httpOnly: true,
             secure: false,
@@ -160,16 +154,16 @@ const userLogoutController = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: "User logged out successfully",
-            status: "success"
+            success: true,
+            message: "User logged out successfully"
         });
 
     } catch (error) {
         console.error("Logout error:", error);
 
         return res.status(500).json({
-            message: "Internal server error",
-            status: "failed"
+            success: false,
+            message: "Internal server error"
         });
     }
 };

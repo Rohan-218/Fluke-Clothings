@@ -17,6 +17,18 @@ orderRouter.post("/create", authMiddleware.authMiddleware, orderController.creat
 orderRouter.get("/", authMiddleware.authMiddleware, orderController.getUserOrdersController);
 
 /**
+ * @route GET /api/order/list
+ * @desc Get all orders for admin
+ */
+orderRouter.get("/list", authMiddleware.systemAuthMiddleware, orderController.getAllOrdersController);
+
+/**
+ * @route PUT /api/order/status
+ * @desc Update order status for admin
+ */
+orderRouter.put("/status", authMiddleware.systemAuthMiddleware, orderController.updateOrderStatusController);
+
+/**
  * @route GET /api/order/:orderId
  * @desc Get a specific order belonging to authenticated user
  */

@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema(
@@ -7,11 +8,49 @@ const orderItemSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-    name: { type: String, required: true },
-    image: { type: String, default: "" },
-    price: { type: Number, required: true },
-    size: { type: String, required: true },
-    quantity: { type: Number, required: true, min: 1 },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    image: {
+      type: String,
+      default: "",
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    size: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      validate: {
+        validator: Number.isSafeInteger,
+        message: "Quantity must be a whole number",
+      },
+    },
+  },
+  { _id: false }
+);
+
+const addressSchema = new mongoose.Schema(
+  {
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true },
+    street: { type: String, required: true, trim: true },
+    city: { type: String, required: true, trim: true },
+    state: { type: String, required: true, trim: true },
+    zipcode: { type: String, required: true, trim: true },
+    country: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
   },
   { _id: false }
 );
@@ -27,12 +66,36 @@ const orderSchema = new mongoose.Schema(
     items: {
       type: [orderItemSchema],
       required: true,
+      validate: {
+        validator: (items) => items.length > 0,
+        message: "An order must contain at least one item",
+      },
     },
-    subtotal: { type: Number, required: true },
-    deliveryFee: { type: Number, required: true },
-    total: { type: Number, required: true },
-    address: { type: Object, default: {} },
-    paymentMethod: { type: String, default: "COD" },
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    deliveryFee: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    total: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    address: {
+      type: addressSchema,
+      required: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["COD", "stripe", "razorpay"],
+      default: "COD",
+      required: true,
+    },
     paymentStatus: {
       type: String,
       enum: ["Pending", "Paid", "Failed"],

@@ -26,7 +26,7 @@ const Login = () => {
 
       const response = await axios.post(`${backendUrl}${endpoint}`, payload, { withCredentials: true, headers: { "Content-Type": "application/json" } });
 
-      if (response.data.status !== "success") {
+      if (response.data.success === false) {
         toast.error(response.data.message || "Authentication failed.");
         return;
       }

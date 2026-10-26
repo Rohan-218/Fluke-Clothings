@@ -5,8 +5,8 @@ import Product from "../models/product.model.js";
 const DELIVERY_FEE = 70;
 
 /**
- * Create order for authenticated user
- * POST /api/order/create
+ * @route POST /api/order/create
+ * @desc Create order for authenticated user
  */
 const createOrderController = async (req, res) => {
   try {
@@ -17,6 +17,49 @@ const createOrderController = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Your order must contain at least one item",
+      });
+    }
+
+    const requiredAddressFields = [
+      "firstName",
+      "lastName",
+      "email",
+      "street",
+      "city",
+      "state",
+      "zipcode",
+      "country",
+      "phone",
+    ];
+
+    if (
+      !address ||
+      typeof address !== "object" ||
+      requiredAddressFields.some(
+        (field) =>
+          typeof address[field] !== "string" ||
+          !address[field].trim()
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide complete delivery information",
+      });
+    }
+
+    const normalizedPaymentMethod =
+      typeof paymentMethod === "string"
+        ? paymentMethod.trim().toLowerCase() === "cod"
+          ? "COD"
+          : paymentMethod.trim().toLowerCase()
+        : "";
+
+    const allowedPaymentMethods = ["COD", "stripe", "razorpay"];
+
+    if (!allowedPaymentMethods.includes(normalizedPaymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method",
       });
     }
 
@@ -48,6 +91,16 @@ const createOrderController = async (req, res) => {
         });
       }
 
+      if (
+        !Array.isArray(product.sizes) ||
+        !product.sizes.includes(size)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: `Size ${size} is not available for ${product.name}`,
+        });
+      }
+
       const price = Number(product.price);
 
       if (!Number.isFinite(price) || price < 0) {
@@ -61,10 +114,10 @@ const createOrderController = async (req, res) => {
         productId: product._id,
         name: product.name,
         image: Array.isArray(product.image)
-          ? product.image[0]
-          : product.image,
+          ? product.image[0] || ""
+          : product.image || "",
         price,
-        size,
+        size: size.trim(),
         quantity,
       });
 
@@ -81,7 +134,7 @@ const createOrderController = async (req, res) => {
       deliveryFee,
       total,
       address,
-      paymentMethod: paymentMethod || "COD",
+      paymentMethod: normalizedPaymentMethod,
     });
 
     return res.status(201).json({
@@ -100,8 +153,8 @@ const createOrderController = async (req, res) => {
 };
 
 /**
- * Get authenticated user's orders
- * GET /api/order
+ * @route GET /api/order
+ * @desc Get authenticated user's orders
  */
 const getUserOrdersController = async (req, res) => {
   try {
@@ -126,8 +179,8 @@ const getUserOrdersController = async (req, res) => {
 };
 
 /**
- * Get a specific order belonging to the authenticated user
- * GET /api/order/:orderId
+ * @route GET /api/order/:orderId
+ * @desc Get a specific order belonging to the authenticated user
  */
 const getOrderByIdController = async (req, res) => {
   try {
@@ -167,8 +220,91 @@ const getOrderByIdController = async (req, res) => {
   }
 };
 
+/**
+ * @route GET /api/order/list
+ * @desc Get all orders for admin
+ */
+const getAllOrdersController = async (req, res) => {
+  try {
+    const orders = await Order.find({}).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    console.error("Get all orders error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+    });
+  }
+};
+
+/**
+ * @route PUT /api/order/status
+ * @desc Update order status for admin
+ */
+const updateOrderStatusController = async (req, res) => {
+  try {
+    const { orderId, status } = req.body;
+
+    const allowedStatuses = [
+      "Order Placed",
+      "Packing",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+    ];
+
+    if (!orderId || !mongoose.isValidObjectId(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
+      });
+    }
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status",
+      });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Update order status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update order status",
+    });
+  }
+};
+
 export {
   createOrderController,
   getUserOrdersController,
   getOrderByIdController,
+  getAllOrdersController,
+  updateOrderStatusController
 };

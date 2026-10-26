@@ -16,7 +16,7 @@ const Navbar = ({ setIsAuthenticated }) => {
         `${backendUrl}/api/auth/logout`
       );
 
-      if (response.data.status === "success") {
+      if (response.data.success === true) {
         setIsAuthenticated(false);
         navigate("/login", { replace: true });
         toast.success(response.data.message || "Logout successful");

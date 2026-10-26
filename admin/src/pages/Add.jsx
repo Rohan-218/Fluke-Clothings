@@ -70,7 +70,7 @@ const Add = () => {
       formData
     );
 
-    if (response.data.status !== "success") {
+    if (response.data.success === false) {
       throw new Error(
         response.data.message || "Product registration failed"
       );
