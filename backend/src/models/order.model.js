@@ -113,6 +113,10 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Order Placed",
     },
+    estimatedDeliveryDate: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

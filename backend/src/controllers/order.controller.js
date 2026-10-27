@@ -16,7 +16,7 @@ const createOrderController = async (req, res) => {
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Your order must contain at least one item",
+        message: "Your order must contain at least one item"
       });
     }
 
@@ -29,7 +29,7 @@ const createOrderController = async (req, res) => {
       "state",
       "zipcode",
       "country",
-      "phone",
+      "phone"
     ];
 
     if (
@@ -43,7 +43,7 @@ const createOrderController = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Please provide complete delivery information",
+        message: "Please provide complete delivery information"
       });
     }
 
@@ -59,7 +59,7 @@ const createOrderController = async (req, res) => {
     if (!allowedPaymentMethods.includes(normalizedPaymentMethod)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid payment method",
+        message: "Invalid payment method"
       });
     }
 
@@ -78,7 +78,7 @@ const createOrderController = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Invalid order item",
+          message: "Invalid order item"
         });
       }
 
@@ -87,7 +87,7 @@ const createOrderController = async (req, res) => {
       if (!product) {
         return res.status(400).json({
           success: false,
-          message: "A product in your cart no longer exists",
+          message: "A product in your cart no longer exists"
         });
       }
 
@@ -97,7 +97,7 @@ const createOrderController = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: `Size ${size} is not available for ${product.name}`,
+          message: `Size ${size} is not available for ${product.name}`
         });
       }
 
@@ -106,7 +106,7 @@ const createOrderController = async (req, res) => {
       if (!Number.isFinite(price) || price < 0) {
         return res.status(400).json({
           success: false,
-          message: "Invalid product price",
+          message: "Invalid product price"
         });
       }
 
@@ -118,7 +118,7 @@ const createOrderController = async (req, res) => {
           : product.image || "",
         price,
         size: size.trim(),
-        quantity,
+        quantity
       });
 
       subtotal += price * quantity;
@@ -134,20 +134,20 @@ const createOrderController = async (req, res) => {
       deliveryFee,
       total,
       address,
-      paymentMethod: normalizedPaymentMethod,
+      paymentMethod: normalizedPaymentMethod
     });
 
     return res.status(201).json({
       success: true,
       message: "Order placed successfully",
-      order,
+      order
     });
   } catch (error) {
     console.error("Create order error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to place order",
+      message: "Failed to place order"
     });
   }
 };
@@ -161,19 +161,19 @@ const getUserOrdersController = async (req, res) => {
     const userId = req.user.id;
 
     const orders = await Order.find({ userId }).sort({
-      createdAt: -1,
+      createdAt: -1
     });
 
     return res.status(200).json({
       success: true,
-      orders,
+      orders
     });
   } catch (error) {
     console.error("Get user orders error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve orders",
+      message: "Failed to retrieve orders"
     });
   }
 };
@@ -184,38 +184,34 @@ const getUserOrdersController = async (req, res) => {
  */
 const getOrderByIdController = async (req, res) => {
   try {
-    const userId = req.user.id;
     const { orderId } = req.params;
 
     if (!mongoose.isValidObjectId(orderId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid order ID",
+        message: "Invalid order ID"
       });
     }
 
-    const order = await Order.findOne({
-      _id: orderId,
-      userId,
-    });
+    const order = await Order.findById(orderId);
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Order not found",
+        message: "Order not found"
       });
     }
 
     return res.status(200).json({
       success: true,
-      order,
+      order
     });
   } catch (error) {
     console.error("Get order error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve order",
+      message: "Failed to retrieve order"
     });
   }
 };
@@ -230,14 +226,14 @@ const getAllOrdersController = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      orders,
+      orders
     });
   } catch (error) {
     console.error("Get all orders error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch orders",
+      message: "Failed to fetch orders"
     });
   }
 };
@@ -254,19 +250,19 @@ const cancelOrderController = async (req, res) => {
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid order ID",
+        message: "Invalid order ID"
       });
     }
 
     const order = await Order.findOne({
       _id: orderId,
-      userId,
+      userId
     });
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Order not found",
+        message: "Order not found"
       });
     }
 
@@ -275,7 +271,7 @@ const cancelOrderController = async (req, res) => {
     if (!cancellableStatuses.includes(order.status || "Order Placed")) {
       return res.status(400).json({
         success: false,
-        message: "This order can no longer be cancelled",
+        message: "This order can no longer be cancelled"
       });
     }
 
@@ -285,14 +281,14 @@ const cancelOrderController = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Order cancelled successfully",
-      order,
+      order
     });
   } catch (error) {
     console.error("Cancel order error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to cancel order",
+      message: "Failed to cancel order"
     });
   }
 };
@@ -311,47 +307,127 @@ const updateOrderStatusController = async (req, res) => {
       "Shipped",
       "Out for Delivery",
       "Delivered",
-      "Cancelled",
+      "Cancelled"
     ];
 
     if (!orderId || !mongoose.isValidObjectId(orderId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid order ID",
+        message: "Invalid order ID"
       });
     }
 
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid order status",
+        message: "Invalid order status"
       });
     }
 
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { status },
-      { returnDocument: "after", runValidators: true }
-    );
+    const order = await Order.findById(orderId);
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Order not found",
+        message: "Order not found"
       });
     }
+
+    if (order.status === "Cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "A cancelled order cannot be changed to another status"
+      });
+    }
+
+    order.status = status;
+
+    if (status === "Packing") {
+      order.estimatedDeliveryDate = new Date(
+        Date.now() + 8 * 24 * 60 * 60 * 1000
+      );
+    }
+
+    await order.save();
 
     return res.status(200).json({
       success: true,
       message: "Order status updated successfully",
-      order,
+      order
     });
   } catch (error) {
     console.error("Update order status error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update order status",
+      message: "Failed to update order status"
+    });
+  }
+};
+
+const updateOrderDeliveryDateController = async (req, res) => {
+  try {
+    const { orderId, deliveryDate } = req.body;
+
+    if (!orderId || !mongoose.isValidObjectId(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID"
+      });
+    }
+
+    if (
+      typeof deliveryDate !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(deliveryDate)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid delivery date"
+      });
+    }
+
+    const parsedDate = new Date(`${deliveryDate}T00:00:00.000Z`);
+
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      parsedDate.toISOString().slice(0, 10) !== deliveryDate
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid delivery date"
+      });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    if (order.status === "Cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot update the delivery date of a cancelled order"
+      });
+    }
+
+    order.estimatedDeliveryDate = parsedDate;
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Estimated delivery date updated successfully",
+      order
+    });
+  } catch (error) {
+    console.error("Update delivery date error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update delivery date"
     });
   }
 };
@@ -362,5 +438,6 @@ export {
   getOrderByIdController,
   getAllOrdersController,
   cancelOrderController,
-  updateOrderStatusController
+  updateOrderStatusController,
+  updateOrderDeliveryDateController
 };
