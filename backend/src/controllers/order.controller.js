@@ -243,6 +243,61 @@ const getAllOrdersController = async (req, res) => {
 };
 
 /**
+ * @route PUT /api/order/cancel
+ * @desc Cancel an order belonging to the authenticated user
+ */
+const cancelOrderController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { orderId } = req.body;
+
+    if (!orderId || !mongoose.isValidObjectId(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
+      });
+    }
+
+    const order = await Order.findOne({
+      _id: orderId,
+      userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const cancellableStatuses = ["Order Placed", "Packing"];
+
+    if (!cancellableStatuses.includes(order.status || "Order Placed")) {
+      return res.status(400).json({
+        success: false,
+        message: "This order can no longer be cancelled",
+      });
+    }
+
+    order.status = "Cancelled";
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Cancel order error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
+    });
+  }
+};
+
+/**
  * @route PUT /api/order/status
  * @desc Update order status for admin
  */
@@ -276,7 +331,7 @@ const updateOrderStatusController = async (req, res) => {
     const order = await Order.findByIdAndUpdate(
       orderId,
       { status },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!order) {
@@ -306,5 +361,6 @@ export {
   getUserOrdersController,
   getOrderByIdController,
   getAllOrdersController,
+  cancelOrderController,
   updateOrderStatusController
 };

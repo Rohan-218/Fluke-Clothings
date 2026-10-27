@@ -17,6 +17,12 @@ orderRouter.post("/create", authMiddleware.authMiddleware, orderController.creat
 orderRouter.get("/", authMiddleware.authMiddleware, orderController.getUserOrdersController);
 
 /**
+ * @route PUT /api/order/cancel
+ * @desc Cancel an order belonging to the authenticated user
+ */
+orderRouter.put("/cancel", authMiddleware.authMiddleware, orderController.cancelOrderController);
+
+/**
  * @route GET /api/order/list
  * @desc Get all orders for admin
  */
