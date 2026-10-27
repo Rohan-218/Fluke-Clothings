@@ -327,6 +327,7 @@ const Orders = () => {
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gray-100">
                       <img src={assets.order_status_icon} alt="" className="h-5 w-5" />
                     </div>
+
                     <div className="min-w-0 flex-1">
                       <p className="break-all text-sm font-semibold text-gray-800">Order #{order._id}</p>
                       <p className="mt-1 text-sm text-gray-600">{getCustomerName(order.address)}</p>
@@ -344,10 +345,11 @@ const Orders = () => {
                           {order.status || "Order Placed"}
                         </span>
                         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getPaymentStyle(order.paymentStatus)}`}>
-                          Payement: {order.paymentStatus || "Pending"}
+                          Payment: {order.paymentStatus || "Pending"}
                         </span>
                       </div>
                     </div>
+
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white">
                       <svg
                         className={`h-4 w-4 text-gray-600 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
@@ -367,31 +369,52 @@ const Orders = () => {
 
                 {isExpanded && (
                   <div id={`order-details-${order._id}`} className="border-t border-gray-200 bg-gray-50/50 p-4 sm:p-5">
-                    <div className="mb-5 flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800">Order Details</p>
-                        <p className="mt-1 break-all text-xs text-gray-500">ID: {order._id}</p>
-                        <p className="mt-1 text-xs text-gray-500">Order Date: {formatDate(order.createdAt)}</p>
-                      </div>
-                    </div>
-
+                    {/* Delivery Information and Payment Method */}
                     <div className="grid grid-cols-1 gap-4 py-1 sm:grid-cols-2">
                       <div className="rounded-lg border border-gray-200 bg-white p-4">
                         <p className="mb-2 text-sm font-semibold text-gray-800">Delivery Information</p>
                         <p className="text-sm text-gray-700">{getCustomerName(order.address)}</p>
-                        <p className="mt-1 break-words text-sm text-gray-500">{getAddress(order.address)}</p>
+                        <p className="mt-1 wrap-break-word text-sm text-gray-500">{getAddress(order.address)}</p>
                         {order.address?.phone && <p className="mt-1 text-sm text-gray-500">Phone: {order.address.phone}</p>}
                         {order.address?.email && <p className="mt-1 break-all text-sm text-gray-500">Email: {order.address.email}</p>}
+
+                        <div className="mt-3 border-t border-gray-100 pt-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Payment Method</p>
+                          <p className="mt-1 text-sm font-medium text-gray-700">
+                            {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod || "—"}
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="rounded-lg border border-gray-200 bg-white p-4 sm:text-left">
-                        <p className="mb-2 text-sm font-semibold text-gray-800">Payment Information</p>
-                        <p className="text-sm text-gray-600">Method: {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod || "—"}</p>
-                        <p className="mt-1 text-sm text-gray-600">Payment Status: {order.paymentStatus || "Pending"}</p>
-                        <p className="mt-2 text-base font-semibold text-gray-800">Total: {currency}{Number(order.total || 0).toFixed(2)}</p>
+                      {/* Order Summary */}
+                      <div className="rounded-lg border border-gray-200 bg-white p-4">
+                        <p className="mb-4 text-sm font-semibold text-gray-800">Order Summary</p>
+
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm text-gray-600">Subtotal</p>
+                            <p className="text-sm font-medium text-gray-800">{currency}{Number(order.subtotal || 0).toFixed(2)}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm text-gray-600">Delivery Fee</p>
+                            <p className="text-sm font-medium text-gray-800">{currency}{Number(order.deliveryFee || 0).toFixed(2)}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm text-gray-600">Total Items</p>
+                            <p className="text-sm font-medium text-gray-800">{totalItems}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4 border-t border-gray-200 pt-3">
+                            <p className="text-sm font-semibold text-gray-900">Total Amount</p>
+                            <p className="text-base font-semibold text-gray-900">{currency}{Number(order.total || 0).toFixed(2)}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
+                    {/* Ordered Products */}
                     <div className="mt-5 rounded-lg border border-gray-200 bg-white p-4">
                       <p className="mb-3 text-sm font-semibold text-gray-800">Ordered Products</p>
                       <div className="flex flex-col gap-3">
@@ -402,7 +425,7 @@ const Orders = () => {
                             <div key={`${order._id}-${item.productId}-${item.size}-${index}`} className="flex items-center gap-3 border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
                               <img className="h-14 w-14 shrink-0 rounded-lg object-cover sm:h-16 sm:w-16" src={productImage || "/placeholder.png"} alt={item.name || "Product"} />
                               <div className="min-w-0 flex-1">
-                                <p className="break-words text-sm font-medium text-gray-800">{item.name || "Product"}</p>
+                                <p className="wrap-break-word text-sm font-medium text-gray-800">{item.name || "Product"}</p>
                                 <p className="mt-1 text-xs text-gray-500">Size: {item.size || "—"} | Quantity: {item.quantity || 0}</p>
                                 <p className="mt-1 text-sm text-gray-700">{currency}{Number(item.price || 0).toFixed(2)} each</p>
                               </div>
@@ -413,27 +436,9 @@ const Orders = () => {
                       </div>
                     </div>
 
+                    {/* Delivery Schedule and Order Status */}
                     <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-8">
                       <div className="flex min-w-0 flex-col gap-4">
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-gray-200 bg-white p-4">
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Subtotal</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800">{currency}{Number(order.subtotal || 0).toFixed(2)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Delivery Fee</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800">{currency}{Number(order.deliveryFee || 0).toFixed(2)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Total Items</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800">{totalItems}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Total Amount</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800">{currency}{Number(order.total || 0).toFixed(2)}</p>
-                          </div>
-                        </div>
-
                         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                           <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
                             <div className="flex items-center gap-2">
