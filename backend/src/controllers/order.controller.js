@@ -5,8 +5,8 @@ import Product from "../models/product.model.js";
 const DELIVERY_FEE = 70;
 
 /**
- * @route POST /api/order/create
- * @desc Create order for authenticated user
+ * - @route POST /api/order/create
+ * - @desc Create order for authenticated user
  */
 const createOrderController = async (req, res) => {
   try {
@@ -127,6 +127,11 @@ const createOrderController = async (req, res) => {
     const deliveryFee = DELIVERY_FEE;
     const total = subtotal + deliveryFee;
 
+    const estimatedDeliveryDate = new Date();
+    estimatedDeliveryDate.setDate(
+      estimatedDeliveryDate.getDate() + 8
+    );
+
     const order = await Order.create({
       userId,
       items: orderItems,
@@ -134,7 +139,10 @@ const createOrderController = async (req, res) => {
       deliveryFee,
       total,
       address,
-      paymentMethod: normalizedPaymentMethod
+      paymentMethod: normalizedPaymentMethod,
+      paymentStatus: "Pending",
+      status: "Order Placed",
+      estimatedDeliveryDate
     });
 
     return res.status(201).json({
@@ -153,8 +161,8 @@ const createOrderController = async (req, res) => {
 };
 
 /**
- * @route GET /api/order
- * @desc Get authenticated user's orders
+ * - @route GET /api/order
+ * - @desc Get authenticated user's orders
  */
 const getUserOrdersController = async (req, res) => {
   try {
@@ -179,8 +187,8 @@ const getUserOrdersController = async (req, res) => {
 };
 
 /**
- * @route GET /api/order/:orderId
- * @desc Get a specific order belonging to the authenticated user
+ * - @route GET /api/order/:orderId
+ * - @desc Get a specific order belonging to the authenticated user
  */
 const getOrderByIdController = async (req, res) => {
   try {
@@ -193,7 +201,10 @@ const getOrderByIdController = async (req, res) => {
       });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findOne({
+      _id: orderId,
+      userId: req.user.id
+    });
 
     if (!order) {
       return res.status(404).json({
@@ -217,8 +228,8 @@ const getOrderByIdController = async (req, res) => {
 };
 
 /**
- * @route GET /api/order/list
- * @desc Get all orders for admin
+ * - @route GET /api/order/list
+ * - @desc Get all orders for admin
  */
 const getAllOrdersController = async (req, res) => {
   try {
@@ -239,8 +250,8 @@ const getAllOrdersController = async (req, res) => {
 };
 
 /**
- * @route PUT /api/order/cancel
- * @desc Cancel an order belonging to the authenticated user
+ * - @route PUT /api/order/cancel
+ * - @desc Cancel an order belonging to the authenticated user
  */
 const cancelOrderController = async (req, res) => {
   try {
@@ -268,7 +279,11 @@ const cancelOrderController = async (req, res) => {
 
     const cancellableStatuses = ["Order Placed", "Packing"];
 
-    if (!cancellableStatuses.includes(order.status || "Order Placed")) {
+    if (
+      !cancellableStatuses.includes(
+        order.status || "Order Placed"
+      )
+    ) {
       return res.status(400).json({
         success: false,
         message: "This order can no longer be cancelled"
@@ -276,6 +291,8 @@ const cancelOrderController = async (req, res) => {
     }
 
     order.status = "Cancelled";
+    order.paymentStatus = "Cancelled";
+
     await order.save();
 
     return res.status(200).json({
@@ -294,8 +311,8 @@ const cancelOrderController = async (req, res) => {
 };
 
 /**
- * @route PUT /api/order/status
- * @desc Update order status for admin
+ * - @route PUT /api/order/status
+ * - @desc Update order status for admin
  */
 const updateOrderStatusController = async (req, res) => {
   try {
@@ -333,26 +350,72 @@ const updateOrderStatusController = async (req, res) => {
       });
     }
 
-    if (order.status === "Cancelled") {
+    const previousStatus = order.status || "Order Placed";
+
+    if (previousStatus === "Cancelled") {
       return res.status(400).json({
         success: false,
-        message: "A cancelled order cannot be changed to another status"
+        message: "A cancelled order cannot be reopened"
       });
     }
 
-    order.status = status;
-
-    if (status === "Packing") {
-      order.estimatedDeliveryDate = new Date(
-        Date.now() + 8 * 24 * 60 * 60 * 1000
-      );
+    if (
+      previousStatus === "Delivered" &&
+      status !== "Delivered"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A delivered order cannot be changed to another status"
+      });
     }
+
+    if (previousStatus === status) {
+      return res.status(200).json({
+        success: true,
+        message: "Order status is already set to this value",
+        order
+      });
+    }
+
+    const deliveryDaysByStatus = {
+      "Order Placed": 8,
+      "Packing": 7,
+      "Shipped": 4
+    };
+
+    if (status === "Cancelled") {
+      order.paymentStatus = "Cancelled";
+    } else {
+      if (status in deliveryDaysByStatus) {
+        const estimatedDate = new Date();
+
+        estimatedDate.setDate(
+          estimatedDate.getDate() + deliveryDaysByStatus[status]
+        );
+
+        order.estimatedDeliveryDate = estimatedDate;
+      }
+
+      if (status === "Out for Delivery") {
+        order.estimatedDeliveryDate = new Date();
+      }
+
+      if (status === "Delivered") {
+        const deliveredDate = new Date();
+
+        order.deliveredAt = deliveredDate;
+        order.estimatedDeliveryDate = deliveredDate;
+        order.paymentStatus = "Paid";
+      }
+    }
+
+    order.status = status;
 
     await order.save();
 
     return res.status(200).json({
       success: true,
-      message: "Order status updated successfully",
+      message: "Order status and delivery estimate updated successfully",
       order
     });
   } catch (error) {
@@ -365,6 +428,10 @@ const updateOrderStatusController = async (req, res) => {
   }
 };
 
+/**
+ * - @route PUT /api/order/delivery-date
+ * - @desc Update order delivery date for admin
+ */
 const updateOrderDeliveryDateController = async (req, res) => {
   try {
     const { orderId, deliveryDate } = req.body;
@@ -414,7 +481,15 @@ const updateOrderDeliveryDateController = async (req, res) => {
       });
     }
 
+    if (order.status === "Delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot update the delivery date of a delivered order"
+      });
+    }
+
     order.estimatedDeliveryDate = parsedDate;
+
     await order.save();
 
     return res.status(200).json({

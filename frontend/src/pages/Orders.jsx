@@ -94,7 +94,11 @@ const Orders = () => {
   const formatDate = (date) => {
     if (!date) return "—";
 
-    return new Date(date).toLocaleDateString("en-IN", {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) return "—";
+
+    return parsedDate.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -170,6 +174,25 @@ const Orders = () => {
                   <p className="mt-2 text-sm text-gray-500">
                     Payment: {order.paymentStatus || "Pending"}
                   </p>
+
+                  {/* Estimated delivery date */}
+                  {order.status === "Cancelled" ? (
+                    <p className="mt-2 text-sm text-red-600">
+                      Delivery estimate is no longer applicable.
+                    </p>
+                  ) : order.estimatedDeliveryDate ? (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Estimated Delivery:{" "}
+                      <span className="font-semibold text-gray-800">
+                        {formatDate(order.estimatedDeliveryDate)}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-gray-500">
+                      Estimated delivery date will be available once your
+                      order is packed.
+                    </p>
+                  )}
                 </div>
               </div>
 
