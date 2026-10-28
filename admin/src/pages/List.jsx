@@ -14,6 +14,18 @@ const List = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    subCategory: "",
+    sizes: "",
+    bestseller: false
+  });
 
   const fetchList = async () => {
     try {
@@ -36,7 +48,7 @@ const List = () => {
 
   const removeProduct = async (productId) => {
     try {
-      const response = await axios.delete(`${backendUrl}/api/product/${productId}`);
+      const response = await axios.delete(`${backendUrl}/api/product/${productId}`, { withCredentials: true });
 
       if (response.data.success === true) {
         setList((prev) => prev.filter((item) => item._id !== productId));
@@ -80,7 +92,7 @@ const List = () => {
     try {
       const results = await Promise.allSettled(
         selectedProducts.map(async (productId) => {
-          const response = await axios.delete(`${backendUrl}/api/product/${productId}`);
+          const response = await axios.delete(`${backendUrl}/api/product/${productId}`, { withCredentials: true });
           if (response.data.success !== true) {
             throw new Error(response.data.message || "Failed to delete product");
           }
@@ -105,22 +117,133 @@ const List = () => {
     }
   };
 
-  // Local-only toggle for now. Connect this to your bestseller API later.
-  const toggleBestseller = (productId, event) => {
-    event?.stopPropagation();
-
-    setList((prev) => prev.map((item) => item._id === productId ? { ...item, bestseller: !item.bestseller } : item));
-    setSelectedProduct((prev) => prev?._id === productId ? { ...prev, bestseller: !prev.bestseller } : prev);
-  };
-
   const openProductDetails = (product) => {
     setSelectedProduct(product);
     setActiveImage(0);
+    setEditing(false);
+    setEditForm({
+      name: product.name || "",
+      description: product.description || "",
+      price: product.price ?? "",
+      category: product.category || "",
+      subCategory: product.subCategory || "",
+      sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
+      bestseller: Boolean(product.bestseller)
+    });
   };
 
   const closeProductDetails = () => {
     setSelectedProduct(null);
     setActiveImage(0);
+    setEditing(false);
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value, type, checked } = event.target;
+
+    setEditForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  const saveProductChanges = async (event) => {
+    event.preventDefault();
+
+    if (!selectedProduct) return;
+
+    if (!editForm.name.trim() || !editForm.description.trim() || !editForm.category.trim() || !editForm.subCategory.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    if (editForm.price === "" || !Number.isFinite(Number(editForm.price)) || Number(editForm.price) < 0) {
+      toast.error("Please enter a valid price.");
+      return;
+    }
+
+    const sizes = editForm.sizes.split(",").map((size) => size.trim()).filter(Boolean);
+
+    if (sizes.length === 0) {
+      toast.error("Please enter at least one size.");
+      return;
+    }
+
+    const updatedData = {
+      name: editForm.name.trim(),
+      description: editForm.description.trim(),
+      price: Number(editForm.price),
+      category: editForm.category.trim(),
+      subCategory: editForm.subCategory.trim(),
+      sizes,
+      bestseller: editForm.bestseller
+    };
+
+    try {
+      setSaving(true);
+
+      const response = await axios.put(
+        `${backendUrl}/api/product/${selectedProduct._id}`,
+        updatedData,
+        { withCredentials: true }
+      );
+
+      if (response.data.success === true) {
+        const updatedProduct = response.data.product;
+
+        setList((prev) => prev.map((item) => item._id === updatedProduct._id ? { ...item, ...updatedProduct } : item));
+        setSelectedProduct((prev) => prev ? { ...prev, ...updatedProduct } : prev);
+        setEditForm({
+          name: updatedProduct.name || "",
+          description: updatedProduct.description || "",
+          price: updatedProduct.price ?? "",
+          category: updatedProduct.category || "",
+          subCategory: updatedProduct.subCategory || "",
+          sizes: Array.isArray(updatedProduct.sizes) ? updatedProduct.sizes.join(", ") : "",
+          bestseller: Boolean(updatedProduct.bestseller)
+        });
+        setEditing(false);
+
+        toast.success(response.data.message || "Product updated successfully");
+      } else {
+        toast.error(response.data.message || "Failed to update product");
+      }
+    } catch (error) {
+      console.error("Update product error:", error);
+      toast.error(error.response?.data?.message || (error.request ? "Unable to connect to the server." : error.message || "Something went wrong"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleBestseller = async (productId, event) => {
+    event?.stopPropagation();
+
+    const product = list.find((item) => item._id === productId) || selectedProduct;
+
+    if (!product) return;
+
+    const updatedBestseller = !product.bestseller;
+
+    try {
+      const response = await axios.put(
+        `${backendUrl}/api/product/${productId}`,
+        { bestseller: updatedBestseller },
+        { withCredentials: true }
+      );
+
+      if (response.data.success === true) {
+        setList((prev) => prev.map((item) => item._id === productId ? { ...item, bestseller: updatedBestseller } : item));
+        setSelectedProduct((prev) => prev?._id === productId ? { ...prev, bestseller: updatedBestseller } : prev);
+        setEditForm((prev) => selectedProduct?._id === productId ? { ...prev, bestseller: updatedBestseller } : prev);
+        toast.success(updatedBestseller ? "Product marked as bestseller" : "Bestseller status removed");
+      } else {
+        toast.error(response.data.message || "Failed to update bestseller status");
+      }
+    } catch (error) {
+      console.error("Update bestseller error:", error);
+      toast.error(error.response?.data?.message || "Failed to update bestseller status");
+    }
   };
 
   useEffect(() => {
@@ -150,6 +273,9 @@ const List = () => {
     if (Array.isArray(product.image)) return product.image.filter(Boolean);
     return product.image ? [product.image] : [];
   };
+
+  const inputClass = "mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-100";
+  const labelClass = "text-xs font-semibold text-gray-600";
 
   return (
     <div className="min-h-screen space-y-5 rounded-2xl bg-[#f7f8fa] p-3 pb-8 sm:p-4 lg:p-5">
@@ -269,7 +395,7 @@ const List = () => {
                         <span className="truncate">Bestseller</span>
                       </span>
                       <button type="button" role="switch" aria-checked={Boolean(item.bestseller)} aria-label={`Toggle bestseller for ${item.name}`} onClick={(event) => toggleBestseller(item._id, event)} className={`relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition ${item.bestseller ? "bg-amber-500" : "bg-gray-300"}`}>
-                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${item.bestseller ? "left-4.5" : "left-0.5"}`} />
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${item.bestseller ? "left-4" : "left-0.5"}`} />
                       </button>
                     </div>
 
@@ -343,41 +469,93 @@ const List = () => {
                 })()}
               </div>
 
-              <div className="min-w-0 space-y-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Product price</p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">{currency}{Number(selectedProduct.price || 0).toLocaleString("en-IN")}</p>
-                </div>
+              <div className="min-w-0">
+                {editing ? (
+                  <form onSubmit={saveProductChanges} className="space-y-4">
+                    <div>
+                      <label className={labelClass} htmlFor="edit-name">Product name</label>
+                      <input id="edit-name" name="name" type="text" value={editForm.name} onChange={handleEditChange} required className={inputClass} />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Category</p><p className="mt-1 wrap-break-word text-sm font-medium text-gray-800">{selectedProduct.category || "Uncategorized"}</p></div>
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Subcategory</p><p className="mt-1 wrap-break-word text-sm font-medium text-gray-800">{selectedProduct.subCategory || "General"}</p></div>
-                </div>
+                    <div>
+                      <label className={labelClass} htmlFor="edit-description">Description</label>
+                      <textarea id="edit-description" name="description" value={editForm.description} onChange={handleEditChange} required rows={4} className={`${inputClass} resize-y`} />
+                    </div>
 
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</p>
-                  <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-gray-600">{selectedProduct.description || "No description provided."}</p>
-                </div>
+                    <div>
+                      <label className={labelClass} htmlFor="edit-price">Price ({currency})</label>
+                      <input id="edit-price" name="price" type="number" min="0" step="0.01" value={editForm.price} onChange={handleEditChange} required className={inputClass} />
+                    </div>
 
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Available sizes</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Array.isArray(selectedProduct.sizes) && selectedProduct.sizes.length > 0 ? selectedProduct.sizes.map((size) => <span key={size} className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-2 text-xs font-medium text-gray-700">{size}</span>) : <span className="text-sm text-gray-400">No sizes listed</span>}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className={labelClass} htmlFor="edit-category">Category</label>
+                        <input id="edit-category" name="category" type="text" value={editForm.category} onChange={handleEditChange} required className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass} htmlFor="edit-subCategory">Subcategory</label>
+                        <input id="edit-subCategory" name="subCategory" type="text" value={editForm.subCategory} onChange={handleEditChange} required className={inputClass} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={labelClass} htmlFor="edit-sizes">Available sizes</label>
+                      <input id="edit-sizes" name="sizes" type="text" value={editForm.sizes} onChange={handleEditChange} placeholder="S, M, L, XL" required className={inputClass} />
+                      <p className="mt-1.5 text-xs text-gray-400">Separate each size with a comma.</p>
+                    </div>
+
+                    <label className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 p-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">Bestseller</p>
+                        <p className="mt-1 text-xs text-gray-500">Show this product as a bestseller.</p>
+                      </div>
+                      <input type="checkbox" name="bestseller" checked={editForm.bestseller} onChange={handleEditChange} className="h-5 w-5 cursor-pointer accent-amber-500" />
+                    </label>
+
+                    <div className="flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row">
+                      <button type="button" onClick={() => { setEditing(false); openProductDetails(selectedProduct); }} disabled={saving} className="min-h-10 flex-1 cursor-pointer rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">Cancel</button>
+                      <button type="submit" disabled={saving} className="min-h-10 flex-1 cursor-pointer rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Saving..." : "Save changes"}</button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Product price</p>
+                      <p className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">{currency}{Number(selectedProduct.price || 0).toLocaleString("en-IN")}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Category</p><p className="mt-1 wrap-break-word text-sm font-medium text-gray-800">{selectedProduct.category || "Uncategorized"}</p></div>
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Subcategory</p><p className="mt-1 wrap-break-word text-sm font-medium text-gray-800">{selectedProduct.subCategory || "General"}</p></div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</p>
+                      <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-gray-600">{selectedProduct.description || "No description provided."}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Available sizes</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {Array.isArray(selectedProduct.sizes) && selectedProduct.sizes.length > 0 ? selectedProduct.sizes.map((size) => <span key={size} className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-2 text-xs font-medium text-gray-700">{size}</span>) : <span className="text-sm text-gray-400">No sizes listed</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">Bestseller</p>
+                        <p className="mt-1 text-xs text-gray-500">{selectedProduct.bestseller ? "Currently marked as a bestseller" : "Not currently a bestseller"}</p>
+                      </div>
+                      <button type="button" role="switch" aria-checked={Boolean(selectedProduct.bestseller)} onClick={(event) => toggleBestseller(selectedProduct._id, event)} className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition ${selectedProduct.bestseller ? "bg-amber-500" : "bg-gray-300"}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${selectedProduct.bestseller ? "left-5" : "left-1"}`} /></button>
+                    </div>
+
+                    <div className="flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row">
+                      <button type="button" onClick={() => setEditing(true)} className="min-h-10 flex-1 cursor-pointer rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700">Edit product</button>
+                      <button type="button" onClick={closeProductDetails} className="min-h-10 flex-1 cursor-pointer rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">Close details</button>
+                      <button type="button" disabled={deleting} onClick={() => { if (window.confirm(`Are you sure you want to delete "${selectedProduct.name}"?`)) removeProduct(selectedProduct._id); }} className="min-h-10 flex-1 cursor-pointer rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50">Delete product</button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 p-3">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">Bestseller</p>
-                    <p className="mt-1 text-xs text-gray-500">{selectedProduct.bestseller ? "Currently marked as a bestseller" : "Not currently a bestseller"}</p>
-                  </div>
-                  <button type="button" role="switch" aria-checked={Boolean(selectedProduct.bestseller)} onClick={(event) => toggleBestseller(selectedProduct._id, event)} className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition ${selectedProduct.bestseller ? "bg-amber-500" : "bg-gray-300"}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${selectedProduct.bestseller ? "left-5.5" : "left-1"}`} /></button>
-                </div>
-
-                <div className="flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row">
-                  <button type="button" onClick={closeProductDetails} className="min-h-10 flex-1 cursor-pointer rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">Close details</button>
-                  <button type="button" disabled={deleting} onClick={() => { if (window.confirm(`Are you sure you want to delete "${selectedProduct.name}"?`)) removeProduct(selectedProduct._id); }} className="min-h-10 flex-1 cursor-pointer rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50">Delete product</button>
-                </div>
+                )}
               </div>
             </div>
           </section>

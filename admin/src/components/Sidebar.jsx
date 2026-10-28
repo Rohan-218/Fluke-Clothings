@@ -7,6 +7,7 @@ const Sidebar = () => {
     { name: 'Add Items', path: '/add', icon: assets.add_icon },
     { name: 'List Items', path: '/list', icon: assets.list_icon },
     { name: 'Orders', path: '/orders', icon: assets.order_icon },
+    { name: 'Users', path: '/users', icon: assets.profile_icon || assets.order_icon },
   ];
 
   return (
@@ -40,7 +41,7 @@ const Sidebar = () => {
 
           <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-4">
             <p className="text-xs font-semibold text-gray-800">Store management</p>
-            <p className="mt-1.5 text-xs leading-5 text-gray-500">Manage products and keep track of customer orders.</p>
+            <p className="mt-1.5 text-xs leading-5 text-gray-500">Manage products, track orders, and view your customers.</p>
           </div>
         </div>
       </aside>

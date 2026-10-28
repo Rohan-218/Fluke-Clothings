@@ -9,6 +9,7 @@ import Sidebar from "./components/Sidebar";
 import Add from "./pages/Add";
 import List from "./pages/List";
 import Orders from "./pages/Orders";
+import Users from "./pages/Users"
 import Login from "./components/Login";
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -64,6 +65,7 @@ const App = () => {
                   <Route path="/add" element={<Add />} />
                   <Route path="/list" element={<List />} />
                   <Route path="/orders" element={<Orders />} />
+                  <Route path="/users" element={<Users />} />
                   <Route path="*" element={<Navigate to="/add" replace />} />
                 </Routes>
               </div>

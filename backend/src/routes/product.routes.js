@@ -33,4 +33,11 @@ productRouter.delete("/:productId", authMiddleware.systemAuthMiddleware, product
  */
 productRouter.get("/:productId", productController.getProductByIdController);
 
+/**
+ * @route PUT /api/product/:productId
+ * @desc Update product details
+ * @access Protected - System users/admin only
+ */
+productRouter.put("/:productId", authMiddleware.systemAuthMiddleware, productController.updateProductController);
+
 export default productRouter;

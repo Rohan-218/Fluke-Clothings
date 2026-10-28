@@ -263,9 +263,146 @@ const getProductByIdController = async (req, res) => {
     }
 };
 
+/**
+ * @route PUT /api/product/:productId
+ * @desc Update product details
+ */
+const updateProductController = async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!mongoose.isValidObjectId(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid product ID"
+            });
+        }
+
+        const product = await productModel.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found"
+            });
+        }
+
+        const allowedFields = [
+            "name",
+            "description",
+            "price",
+            "category",
+            "subCategory",
+            "sizes",
+            "bestseller"
+        ];
+
+        const updates = {};
+
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                updates[field] = req.body[field];
+            }
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No fields provided to update"
+            });
+        }
+
+        if (updates.price !== undefined) {
+            const price = Number(updates.price);
+
+            if (updates.price === "" || !Number.isFinite(price) || price < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Price must be a valid non-negative number"
+                });
+            }
+
+            updates.price = price;
+        }
+
+        if (updates.sizes !== undefined) {
+            try {
+                if (typeof updates.sizes === "string") {
+                    updates.sizes = JSON.parse(updates.sizes);
+                }
+            } catch {
+                return res.status(400).json({
+                    success: false,
+                    message: "Sizes must be valid JSON"
+                });
+            }
+
+            if (
+                !Array.isArray(updates.sizes) ||
+                !updates.sizes.every(
+                    (size) => typeof size === "string" && size.trim() !== ""
+                )
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Sizes must be an array of non-empty strings"
+                });
+            }
+        }
+
+        if (updates.bestseller !== undefined) {
+            if (
+                updates.bestseller === true ||
+                updates.bestseller === "true"
+            ) {
+                updates.bestseller = true;
+            } else if (
+                updates.bestseller === false ||
+                updates.bestseller === "false"
+            ) {
+                updates.bestseller = false;
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: "Bestseller must be true or false"
+                });
+            }
+        }
+
+        Object.assign(product, updates);
+
+        await product.save();
+
+        return res.status(200).json({
+            success: true,
+            product: {
+                _id: product._id,
+                name: product.name,
+                description: product.description,
+                price: product.price,
+                category: product.category,
+                subCategory: product.subCategory,
+                sizes: product.sizes,
+                bestseller: product.bestseller,
+                image: product.image
+            },
+            message: "Product updated successfully"
+        });
+
+    } catch (error) {
+        console.error("Update product error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update product"
+        });
+    }
+};
+
 export {
     addProductController,
     getProductController,
     deleteProductController,
-    getProductByIdController
+    getProductByIdController,
+    updateProductController
 };

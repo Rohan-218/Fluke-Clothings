@@ -17,13 +17,14 @@ import empty_products_icon from './empy_products_icon.svg'
 import up_icon from './up_icon.svg'
 import shopping_bag_icon from './shopping_bag_icon.svg'
 import search_icon from './search_icon.svg'
-import alert_icon from "./alert_icon.svg";
-import empty_orders_icon from "./empty_orders_icon.svg";
-import down_icon from "./down_icon.svg";
-import white_down_icon from "./white_down_icon.svg";
-import location_icon from "./location_icon.svg";
-import order_summary_icon from "./order_summary_icon.svg";
+import alert_icon from './alert_icon.svg';
+import empty_orders_icon from './empty_orders_icon.svg';
+import down_icon from './down_icon.svg';
+import white_down_icon from './white_down_icon.svg';
+import location_icon from './location_icon.svg';
+import order_summary_icon from './order_summary_icon.svg';
 import logout_icon from './logout_icon.png'
+import profile_icon from './profile_icon.png';
 
 export const assets = {
     logo,
@@ -51,6 +52,7 @@ export const assets = {
     white_down_icon,
     location_icon,
     order_summary_icon,
-    logout_icon
+    logout_icon,
+    profile_icon
 }
 
