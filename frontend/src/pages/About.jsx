@@ -12,7 +12,7 @@ const about = () => {
       </div>
 
       <div className="my-10 flex flex-col md:flex-row gap-16">
-        <img className="w-full md:max-w-[450px]" src={assets.about_img} alt="about-us" />
+        <img className="w-full md:max-w-112.5" src={assets.about_img} alt="about-us" />
         <div className="flex flex-col justify-center gap-6 md:w-2/4 text-gray-600">
           <p>At Fluke Clothing, we believe great style should be effortless, versatile, and accessible. We bring together timeless fashion, modern trends, and everyday essentials designed for those who want to look and feel their best. From carefully selected pieces to fresh new arrivals, every product is chosen with a focus on quality, comfort, and contemporary style.</p>
           <p>We’re more than just a clothing store — we’re a place where style meets comfort and individuality. Whether you’re looking for everyday essentials or something to refresh your wardrobe, Fluke Clothing offers a collection that fits effortlessly into your lifestyle and helps you express your personal style with confidence.</p>

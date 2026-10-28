@@ -55,9 +55,9 @@ const SearchBar = () => {
 
       {/* Search */}
       <div className="flex justify-center px-4 pt-6 pb-2">
-        <div className="relative w-full max-w-[880px]">
+        <div className="relative w-full max-w-220">
 
-          <div className="flex items-center w-full h-[46px] border border-gray-700 rounded-[5px] px-3 bg-white">
+          <div className="flex items-center w-full h-11.5 border border-gray-700 rounded-[5px] px-3 bg-white">
             <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={handleKeyDown} className="flex-1 h-full outline-none bg-transparent text-sm" type="text" placeholder="Search products" />
             {search && <span onClick={() => setSearch("")} className="text-gray-500 cursor-pointer mr-4 text-lg">×</span>}
             <img onClick={handleSearch} src={assets.search_icon} alt="search" className="w-5 h-5 cursor-pointer" />
@@ -65,14 +65,14 @@ const SearchBar = () => {
 
           {/* Product suggestions */}
           {!isCollectionPage && search && searchResults.length > 0 && (
-            <div className="absolute top-[46px] left-0 w-full bg-white border border-gray-200 shadow-lg max-h-[600px] overflow-y-auto">
+            <div className="absolute top-11.5 left-0 w-full bg-white border border-gray-200 shadow-lg max-h-150 overflow-y-auto">
               <div className="px-7 py-5">
                 <p className="text-base font-semibold mb-4">Products</p>
 
                 <div className="flex flex-col">
                   {searchResults.map((item) => (
                     <div key={item._id} onClick={() => handleProductClick(item._id)} className="flex items-center gap-4 py-3 cursor-pointer hover:bg-gray-50">
-                      <div className="w-[68px] h-[80px] flex-shrink-0 overflow-hidden">
+                      <div className="w-17 h-20 shrink-0 overflow-hidden">
                         <img src={item.image[0]} alt={item.name} className="w-full h-full object-cover" />
                       </div>
 
@@ -89,7 +89,7 @@ const SearchBar = () => {
 
           {/* No results */}
           {!isCollectionPage && search && searchResults.length === 0 && (
-            <div className="absolute top-[46px] left-0 w-full bg-white border border-gray-200 shadow-lg">
+            <div className="absolute top-11.5 left-0 w-full bg-white border border-gray-200 shadow-lg">
               <p className="px-7 py-6 text-sm text-gray-500">No products found</p>
             </div>
           )}
