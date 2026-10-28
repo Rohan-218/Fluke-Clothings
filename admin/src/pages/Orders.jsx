@@ -18,6 +18,7 @@ const Orders = () => {
   const [searchError, setSearchError] = useState("");
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const fetchOrders = async () => {
     try {
@@ -65,14 +66,14 @@ const Orders = () => {
       if (response.data.success === true) {
         const allOrders = response.data.orders || [];
 
+        setOrders(allOrders);
+
         const matchedOrders = allOrders.filter((order) => {
           const orderId = String(order._id || "").toLowerCase();
           const customerName = getCustomerName(order.address).toLowerCase();
 
           return orderId.includes(query) || customerName.includes(query);
         });
-
-        setOrders(matchedOrders);
 
         setExpandedOrders(
           matchedOrders.length === 1 ? [matchedOrders[0]._id] : []
@@ -123,6 +124,7 @@ const Orders = () => {
     setSearchTerm("");
     setSearchError("");
     setIsSearchActive(false);
+    setStatusFilter("All");
     fetchOrders();
   };
 
@@ -310,6 +312,32 @@ const Orders = () => {
     input.click();
   };
 
+  const filteredOrders = orders.filter((order) => {
+    const matchesStatus =
+      statusFilter === "All" ||
+      (order.status || "Order Placed") === statusFilter;
+
+    const query = searchTerm.trim().toLowerCase();
+
+    const matchesSearch =
+      !isSearchActive ||
+      !query ||
+      String(order._id || "").toLowerCase().includes(query) ||
+      getCustomerName(order.address).toLowerCase().includes(query);
+
+    return matchesStatus && matchesSearch;
+  });
+
+  const statusCounts = {
+    All: orders.length,
+    ...statusOptions.reduce((counts, status) => {
+      counts[status] = orders.filter(
+        (order) => (order.status || "Order Placed") === status
+      ).length;
+      return counts;
+    }, {})
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -325,13 +353,46 @@ const Orders = () => {
 
       {searchError && <p className="text-sm text-red-600">{searchError}</p>}
 
+      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-gray-800">Filter Orders</p>
+          <p className="text-sm text-gray-500">
+            Showing {filteredOrders.length} of {orders.length} orders
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {["All", ...statusOptions].map((status) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => setStatusFilter(status)}
+              className={`rounded-full border px-3 py-2 text-sm transition ${
+                statusFilter === status
+                  ? "border-black bg-black text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {status === "All" ? "All Orders" : status}
+              <span className="ml-2 font-semibold">
+                {statusCounts[status]}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {loading ? (
         <p className="py-8 text-center text-gray-500">Loading orders...</p>
-      ) : orders.length === 0 ? (
-        <p className="py-8 text-center text-gray-500">{isSearchActive ? "No order found for this ID." : "No orders found."}</p>
+      ) : filteredOrders.length === 0 ? (
+        <p className="py-8 text-center text-gray-500">
+          {isSearchActive
+            ? "No orders match your search and selected status."
+            : "No orders found for this status."}
+        </p>
       ) : (
         <div className="flex flex-col gap-3">
-          {orders.map((order) => {
+          {filteredOrders.map((order) => {
             const isExpanded = expandedOrders.includes(order._id);
             const totalItems = (order.items || []).reduce(
               (total, item) => total + Number(item.quantity || 0),
