@@ -9,7 +9,7 @@ import Sidebar from "./components/Sidebar";
 import Add from "./pages/Add";
 import List from "./pages/List";
 import Orders from "./pages/Orders";
-import Users from "./pages/Users"
+import Users from "./pages/Users";
 import Login from "./components/Login";
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -48,31 +48,55 @@ const App = () => {
     <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-center" autoClose={3000} />
 
-      {!isAuthenticated ? (
-        <Login setIsAuthenticated={setIsAuthenticated} />
-      ) : (
-        <>
-          <Navbar setIsAuthenticated={setIsAuthenticated} />
-          <hr className="border-gray-200" />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/add" replace />
+            ) : (
+              <Login setIsAuthenticated={setIsAuthenticated} />
+            )
+          }
+        />
 
-          <div className="flex min-h-[calc(100vh-1px)]">
-            <Sidebar />
+        <Route
+          path="*"
+          element={
+            !isAuthenticated ? (
+              <Navigate to="/login" replace />
+            ) : (
+              <>
+                <Navbar setIsAuthenticated={setIsAuthenticated} />
+                <hr className="border-gray-200" />
 
-            <main className="min-w-0 flex-1 px-3 pb-24 pt-4 text-base text-gray-600 sm:px-5 md:px-5 md:pb-8 md:pt-6 lg:px-8">
-              <div className="mx-auto w-full max-w-[1600px]">
-                <Routes>
-                  <Route path="/" element={<Navigate to="/add" replace />} />
-                  <Route path="/add" element={<Add />} />
-                  <Route path="/list" element={<List />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/users" element={<Users />} />
-                  <Route path="*" element={<Navigate to="/add" replace />} />
-                </Routes>
-              </div>
-            </main>
-          </div>
-        </>
-      )}
+                <div className="flex min-h-[calc(100vh-1px)]">
+                  <Sidebar />
+
+                  <main className="min-w-0 flex-1 px-3 pb-24 pt-4 text-base text-gray-600 sm:px-5 md:px-5 md:pb-8 md:pt-6 lg:px-8">
+                    <div className="mx-auto w-full max-w-[1600px]">
+                      <Routes>
+                        <Route
+                          path="/"
+                          element={<Navigate to="/add" replace />}
+                        />
+                        <Route path="/add" element={<Add />} />
+                        <Route path="/list" element={<List />} />
+                        <Route path="/orders" element={<Orders />} />
+                        <Route path="/users" element={<Users />} />
+                        <Route
+                          path="*"
+                          element={<Navigate to="/add" replace />}
+                        />
+                      </Routes>
+                    </div>
+                  </main>
+                </div>
+              </>
+            )
+          }
+        />
+      </Routes>
     </div>
   );
 };
