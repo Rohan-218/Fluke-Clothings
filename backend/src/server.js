@@ -66,6 +66,9 @@ app.get("/", (req, res) => {
  *
  * @route /api/order
  * @desc Order routes (create orders, retrieve user orders, track specific orders)
+ * 
+ * @route /api/user
+ * @desc User routes ( retrieve user data, retrieve user list)
  */
 app.use("/api/auth", authRouter);
 app.use("/api/product", productRouter);
