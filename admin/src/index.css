@@ -35,11 +35,6 @@ select,input,textarea {
   border-radius: 4px;
 }
 
-/* .Toastify__toast-container--top-center {
-  top: 60px !important;
-} */
-
-.active {
-  background-color: #c0eff6;
-  border-color: #b6bce8;
+.Toastify__toast-container--top-center {
+  top: 70px !important;
 }

@@ -23,6 +23,7 @@ import down_icon from "./down_icon.svg";
 import white_down_icon from "./white_down_icon.svg";
 import location_icon from "./location_icon.svg";
 import order_summary_icon from "./order_summary_icon.svg";
+import logout_icon from './logout_icon.png'
 
 export const assets = {
     logo,
@@ -49,6 +50,7 @@ export const assets = {
     down_icon,
     white_down_icon,
     location_icon,
-    order_summary_icon
+    order_summary_icon,
+    logout_icon
 }
 
