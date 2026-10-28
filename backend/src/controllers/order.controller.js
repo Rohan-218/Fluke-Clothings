@@ -54,7 +54,7 @@ const createOrderController = async (req, res) => {
           : paymentMethod.trim().toLowerCase()
         : "";
 
-    const allowedPaymentMethods = ["COD", "stripe", "razorpay"];
+    const allowedPaymentMethods = ["COD", "cashfree", "razorpay"];
 
     if (!allowedPaymentMethods.includes(normalizedPaymentMethod)) {
       return res.status(400).json({
