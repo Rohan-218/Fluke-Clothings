@@ -5,10 +5,8 @@ import { backendUrl } from "../App";
 import { toast } from "react-toastify";
 
 const Add = () => {
-  // Upload mode
   const [uploadMode, setUploadMode] = useState("single");
 
-  // Single product state
   const [image1, setImage1] = useState(false);
   const [image2, setImage2] = useState(false);
   const [image3, setImage3] = useState(false);
@@ -22,7 +20,6 @@ const Add = () => {
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState([]);
 
-  // Bulk upload state
   const [bulkFiles, setBulkFiles] = useState([]);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState("");

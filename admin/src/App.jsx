@@ -21,7 +21,9 @@ const App = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get(`${backendUrl}/api/auth/me`);
+        await axios.get(`${backendUrl}/api/auth/me`, {
+          withCredentials: true,
+        });
         setIsAuthenticated(true);
       } catch (error) {
         setIsAuthenticated(false);
@@ -35,14 +37,14 @@ const App = () => {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 text-center text-sm text-gray-600 sm:text-base">
         Checking authentication...
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-center" autoClose={3000} />
 
       {!isAuthenticated ? (
@@ -50,20 +52,22 @@ const App = () => {
       ) : (
         <>
           <Navbar setIsAuthenticated={setIsAuthenticated} />
-          <hr />
+          <hr className="border-gray-200" />
 
-          <div className="flex w-full">
+          <div className="flex min-h-[calc(100vh-1px)]">
             <Sidebar />
 
-            <div className="w-[70%] mx-auto ml-[max(5vw,25px)] my-8 text-gray-600 text-base">
-              <Routes>
-                <Route path="/" element={<Navigate to="/add" replace />} />
-                <Route path="/add" element={<Add />} />
-                <Route path="/list" element={<List />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="*" element={<Navigate to="/add" replace />} />
-              </Routes>
-            </div>
+            <main className="min-w-0 flex-1 px-3 pb-24 pt-4 text-base text-gray-600 sm:px-5 md:px-5 md:pb-8 md:pt-6 lg:px-8">
+              <div className="mx-auto w-full max-w-[1600px]">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/add" replace />} />
+                  <Route path="/add" element={<Add />} />
+                  <Route path="/list" element={<List />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="*" element={<Navigate to="/add" replace />} />
+                </Routes>
+              </div>
+            </main>
           </div>
         </>
       )}
