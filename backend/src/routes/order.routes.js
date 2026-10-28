@@ -46,4 +46,7 @@ orderRouter.get("/:orderId", authMiddleware.systemAuthMiddleware, orderControlle
  */
 orderRouter.put("/delivery-date", authMiddleware.systemAuthMiddleware, orderController.updateOrderDeliveryDateController);
 
+
+orderRouter.post("/cashfree/verify", authMiddleware.authMiddleware, orderController.verifyCashfreePaymentController);
+
 export default orderRouter;

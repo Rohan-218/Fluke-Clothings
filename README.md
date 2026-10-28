@@ -48,8 +48,8 @@ CLOUDINARY_API_KEY=<cloudinary-api-key>
 CLOUDINARY_SECRET_KEY=<cloudinary-secret>
 CLOUDINARY_NAME=<cloudinary-cloud-name>
 JWT_SECRET=<long-random-secret>
-VITE_FRONTEND_URL=<store_frontend_url>
-VITE_ADMIN_URL=<admin_panel_url>
+FRONTEND_URL=<store_frontend_url>
+ADMIN_URL=<admin_panel_url>
 ```
 
 `MONGODB_URI` should be the MongoDB connection URI without a database-name suffix; the API appends `/fluke-clothing`. The two `VITE_*_URL` values configure the API's allowed browser origins.
@@ -148,7 +148,7 @@ cd admin
 npm run build
 ```
 
-Each build is written to that app's `dist/` directory. Deploy the backend and each frontend separately, set each frontend's `VITE_BACKEND_URL` to the deployed API URL, and set the backend's `VITE_FRONTEND_URL` and `VITE_ADMIN_URL` to the deployed frontend origins. Configure production credentials through the hosting provider's environment settings rather than committing `.env` files.
+Each build is written to that app's `dist/` directory. Deploy the backend and each frontend separately, set each frontend's `VITE_BACKEND_URL` to the deployed API URL, and set the backend's `FRONTEND_URL` and `ADMIN_URL` to the deployed frontend origins. Configure production credentials through the hosting provider's environment settings rather than committing `.env` files.
 
 ## License
 
