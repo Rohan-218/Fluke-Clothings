@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import Order from "../models/order.model.js";
-import Product from "../models/product.model.js";
+import orderModel from "../models/order.model.js";
+import productModel from "../models/product.model.js";
 
 const DELIVERY_FEE = 70;
 
@@ -82,7 +82,7 @@ const createOrderController = async (req, res) => {
         });
       }
 
-      const product = await Product.findById(productId);
+      const product = await productModel.findById(productId);
 
       if (!product) {
         return res.status(400).json({
@@ -132,7 +132,7 @@ const createOrderController = async (req, res) => {
       estimatedDeliveryDate.getDate() + 8
     );
 
-    const order = await Order.create({
+    const order = await orderModel.create({
       userId,
       items: orderItems,
       subtotal,
@@ -168,7 +168,7 @@ const getUserOrdersController = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const orders = await Order.find({ userId }).sort({
+    const orders = await orderModel.find({ userId }).sort({
       createdAt: -1
     });
 
@@ -201,7 +201,7 @@ const getOrderByIdController = async (req, res) => {
       });
     }
 
-    const order = await Order.findOne({
+    const order = await orderModel.findOne({
       _id: orderId,
       userId: req.user.id
     });
@@ -233,7 +233,7 @@ const getOrderByIdController = async (req, res) => {
  */
 const getAllOrdersController = async (req, res) => {
   try {
-    const orders = await Order.find({}).sort({ createdAt: -1 });
+    const orders = await orderModel.find({}).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -265,7 +265,7 @@ const cancelOrderController = async (req, res) => {
       });
     }
 
-    const order = await Order.findOne({
+    const order = await orderModel.findOne({
       _id: orderId,
       userId
     });
@@ -341,7 +341,7 @@ const updateOrderStatusController = async (req, res) => {
       });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await orderModel.findById(orderId);
 
     if (!order) {
       return res.status(404).json({
@@ -465,7 +465,7 @@ const updateOrderDeliveryDateController = async (req, res) => {
       });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await orderModel.findById(orderId);
 
     if (!order) {
       return res.status(404).json({

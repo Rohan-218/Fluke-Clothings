@@ -401,7 +401,7 @@ const Orders = () => {
                     <div className="flex flex-wrap items-end justify-between gap-3 border-t border-gray-100 pt-4">
                       <div className="flex flex-wrap gap-2">
                         <span className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium ${getStatusStyle(order.status)}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{order.status || "Order Placed"}</span>
-                        <span className={`inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-medium ${getPaymentStyle(order.paymentStatus)}`}>{order.paymentStatus || "Pending"}</span>
+                        <span className={`inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-medium ${getPaymentStyle(order.paymentStatus)}`}>Payment: {order.paymentStatus || "Pending"}</span>
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400">Order total</p>

@@ -48,7 +48,7 @@ const Users = () => {
           <p className="mt-1 text-sm text-gray-500">View and manage your registered customers.</p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+        <div className="flex min-w-37.5 flex-col justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 sm:self-center">
           <p className="text-xs text-gray-500">Total customers</p>
           <p className="mt-1 text-xl font-semibold text-gray-900">{users.length}</p>
         </div>
@@ -72,24 +72,43 @@ const Users = () => {
             {users.length === 0 ? 'No users found.' : 'No users match your search.'}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-150 text-left text-sm">
+          <div className="w-full">
+            <table className="w-full table-fixed text-left text-xs sm:text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                 <tr>
-                  <th className="px-5 py-4 font-semibold">Customer</th>
-                  <th className="px-5 py-4 font-semibold">Email</th>
-                  <th className="px-5 py-4 font-semibold">User ID</th>
+                  <th rowSpan={2} className="px-2 py-3 font-semibold sm:px-3">Customer</th>
+                  <th rowSpan={2} className="px-2 py-3 font-semibold sm:px-3">Email</th>
+                  <th rowSpan={2} className="px-2 py-3 font-semibold sm:px-3">Customer ID</th>
+                  <th colSpan={2} className="px-2 py-3 text-center font-semibold sm:px-3">Orders</th>
+                </tr>
+                <tr>
+                  <th className="px-2 py-2 text-center font-medium normal-case sm:px-3">Total</th>
+                  <th className="px-2 py-2 text-center font-medium normal-case sm:px-3">Cancelled</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((user) => (
                   <tr key={user._id} className="transition hover:bg-gray-50">
-                    <td className="px-5 py-4 font-medium text-gray-800">
-                      {user.name || user.fullName || 'Unnamed user'}
+                    <td className="wrap-break-word px-2 py-3 font-medium text-gray-800 sm:px-3">
+                      {user.name || 'Unnamed user'}
                     </td>
-                    <td className="px-5 py-4 text-gray-600">{user.email || '—'}</td>
-                    <td className="px-5 py-4 text-xs text-gray-500">{user._id}</td>
+                    <td className="break-all px-2 py-3 text-gray-600 sm:px-3">
+                      {user.email || '—'}
+                    </td>
+                    <td className="break-all px-2 py-3 text-[10px] text-gray-500 sm:px-3 sm:text-xs">
+                      {user._id}
+                    </td>
+                    <td className="px-2 py-3 text-center sm:px-3">
+                      <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-green-100 px-2.5 py-1 font-semibold text-green-700">
+                        {user.totalOrders ?? 0}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3 text-center sm:px-3">
+                      <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-red-100 px-2.5 py-1 font-semibold text-red-700">
+                        {user.cancelledOrders ?? 0}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
