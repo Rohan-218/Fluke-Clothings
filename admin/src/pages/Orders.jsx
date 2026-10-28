@@ -45,11 +45,11 @@ const Orders = () => {
     }
   };
 
-  const fetchOrderById = async (orderId, showToast = true) => {
-    const id = orderId.trim();
+  const fetchOrderById = async (searchValue, showToast = true) => {
+    const query = searchValue.trim().toLowerCase();
 
-    if (!id) {
-      if (showToast) toast.error("Please enter an order ID");
+    if (!query) {
+      if (showToast) toast.error("Please enter an order ID or customer name");
       return;
     }
 
@@ -58,24 +58,48 @@ const Orders = () => {
       setSearchError("");
       setIsSearchActive(true);
 
-      const response = await axios.get(`${backendUrl}/api/order/${encodeURIComponent(id)}`, {
+      const response = await axios.get(`${backendUrl}/api/order/list`, {
         withCredentials: true
       });
 
-      if (response.data.success === true && response.data.order) {
-        setOrders([response.data.order]);
-        setExpandedOrders([response.data.order._id]);
+      if (response.data.success === true) {
+        const allOrders = response.data.orders || [];
+
+        const matchedOrders = allOrders.filter((order) => {
+          const orderId = String(order._id || "").toLowerCase();
+          const customerName = getCustomerName(order.address).toLowerCase();
+
+          return orderId.includes(query) || customerName.includes(query);
+        });
+
+        setOrders(matchedOrders);
+
+        setExpandedOrders(
+          matchedOrders.length === 1 ? [matchedOrders[0]._id] : []
+        );
+
+        if (matchedOrders.length === 0) {
+          setSearchError("No order found for this order ID or customer name.");
+        }
       } else {
         setOrders([]);
         setExpandedOrders([]);
-        setSearchError(response.data.message || "Order not found");
+        setSearchError(response.data.message || "Failed to search orders");
       }
     } catch (error) {
       console.error("Search order error:", error.response?.data || error.message);
+
       setOrders([]);
       setExpandedOrders([]);
-      const message = error.response?.data?.message || (error.request ? "Unable to connect to the server." : "Failed to retrieve order");
+
+      const message =
+        error.response?.data?.message ||
+        (error.request
+          ? "Unable to connect to the server."
+          : "Failed to retrieve orders");
+
       setSearchError(message);
+
       if (showToast) toast.error(message);
     } finally {
       setSearching(false);
@@ -294,7 +318,7 @@ const Orders = () => {
       </div>
 
       <form onSubmit={searchOrder} className="flex flex-col gap-2 sm:flex-row">
-        <input type="text" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setSearchError(""); }} placeholder="Enter order ID..." className="w-full rounded border border-gray-300 px-4 py-2 text-sm outline-none focus:border-gray-500 sm:max-w-md" />
+        <input type="text" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setSearchError(""); }} placeholder="Search by order ID or customer name..." className="w-full rounded border border-gray-300 px-4 py-2 text-sm outline-none focus:border-gray-500 sm:max-w-md" />
         <button type="submit" disabled={searching || loading} className="rounded bg-black px-5 py-2 text-sm text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50">{searching ? "Searching..." : "Search Order"}</button>
         <button type="button" onClick={handleShowAllOrders} disabled={searching || loading} className="rounded border border-gray-300 px-5 py-2 text-sm transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">Show All Orders</button>
       </form>
