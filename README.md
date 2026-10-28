@@ -1,129 +1,155 @@
-````markdown
 # Fluke (E-Com)
 
-Fluke is a modern e-commerce application built using the MERN stack. It features product listings, shopping cart management, and a foundation for the checkout process.
+Fluke is a clothing e-commerce application with a customer storefront, an admin dashboard, and a REST API. The storefront and dashboard are React applications built with Vite; the API uses Express and MongoDB.
 
-## Overview
+## Features
 
-This project focuses on:
-- Responsive product browsing
-- Product detail views
-- Shopping cart interactions
-- Checkout flow foundation
-- Clean, scalable frontend structure
+- Browse, search, and view clothing products
+- Register and log in, then manage a persistent shopping cart
+- Place orders and view order history
+- Administer products, orders, and users from a separate dashboard
+- Upload product images through Cloudinary
 
-## Git Branches and Deployments
-
-The branches separate the frontend, backend, and standalone static storefront:
-
-| Branch | Purpose |
-| --- | --- |
-| `dev` | Frontend development with the application server. |
-| `server-dev` | Backend development. |
-| `static-ui` | Static frontend with its assets. This version does not require a backend and is deployed on Render at [e-commerce-45b1.onrender.com](https://e-commerce-45b1.onrender.com). |
-
-## Tech Stack
-
-- Frontend: React + Vite
-- Language: JavaScript
-- Styling: CSS
-- Package manager: npm
-
-## Project Structure
+## Project structure
 
 ```text
-Fluke (E-Com)/
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   ├── .eslintrc*
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── README.md
-├── .gitignore
-├── README.md
-└── package.json
+.
+├── admin/       # React/Vite admin dashboard (port 5174)
+├── backend/     # Express API and MongoDB models (port 3000 by default)
+└── frontend/    # React/Vite customer storefront (port 5173)
 ```
 
-## Prerequisites
+Each app has its own `package.json` and dependencies. There is no root-level npm package or shared install command.
 
-Before running the app, make sure you have:
-- Node.js 18 or later
-- npm 9 or later
+## Requirements
 
-## Getting Started
+- Node.js `^20.19.0` or `>=22.12.0` (required by the Vite version used by the frontend and admin apps)
+- npm
+- A MongoDB database
+- Cloudinary credentials for product image uploads
 
-1. Open a terminal in the project root
-2. Navigate to the frontend app:
+## Local setup
+
+### 1. Configure the backend
+
+In a terminal at the repository root:
+
 ```bash
-cd frontend
-```
-
-3. Install dependencies:
-```bash
+cd backend
 npm install
 ```
 
-4. Start the development server:
+Copy `.env.sample` to `.env` and set the values:
+
+```env
+PORT=3000
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>
+CLOUDINARY_API_KEY=<cloudinary-api-key>
+CLOUDINARY_SECRET_KEY=<cloudinary-secret>
+CLOUDINARY_NAME=<cloudinary-cloud-name>
+JWT_SECRET=<long-random-secret>
+VITE_FRONTEND_URL=<store_frontend_url>
+VITE_ADMIN_URL=<admin_panel_url>
+```
+
+`MONGODB_URI` should be the MongoDB connection URI without a database-name suffix; the API appends `/fluke-clothing`. The two `VITE_*_URL` values configure the API's allowed browser origins.
+
+Start the API:
+
+```bash
+cd backend
+npm run server
+```
+
+For a non-watching start, use `npm start`. The API health check is available at `http://localhost:PORT/`.
+
+### 2. Configure and run the storefront
+
+In a second terminal at the repository root:
+
+```bash
+cd frontend
+npm install
+```
+
+Create `frontend/.env`:
+
+```env
+VITE_BACKEND_URL=http://localhost:PORT
+```
+
+Start the development server:
+
 ```bash
 npm run dev
 ```
 
-The app should open in the browser at the local Vite URL, usually:
-- http://localhost:5173
+The storefront runs at `http://localhost:5173/`.
 
-## Available Scripts
+### 3. Configure and run the admin dashboard
 
-Inside the `frontend` folder:
+In a third terminal at the repository root:
 
 ```bash
-npm run dev      # Start the Vite dev server
-npm run build    # Create a production build
-npm run preview  # Preview the built app
-npm run lint     # Run ESLint checks
+cd admin
+npm install
 ```
 
-## Environment Variables
-
-If the app needs API configuration, create a `.env` file inside `frontend/`:
+Create `admin/.env`:
 
 ```env
-VITE_API_URL=http://localhost:5000
+VITE_BACKEND_URL=http://localhost:PORT
 ```
 
-## Features
+Start the dashboard:
 
-Current and planned features include:
-- Product catalog
-- Search and filtering
-- Shopping cart
-- Checkout flow
-- Responsive layout
-- Backend integration support
+```bash
+npm run dev
+```
 
-## Development Notes
+The admin dashboard runs at `http://localhost:5174/`. Sign in with an account that has system/admin access.
 
-- Keep components modular and reusable
-- Separate business logic from UI where possible
-- Use environment variables for API configuration
-- Follow consistent naming and folder conventions
+## Scripts
 
-## Deployment
+Run these commands from the corresponding app directory:
 
-To deploy the app:
+| App | Command | Description |
+| --- | --- | --- |
+| `frontend/` or `admin/` | `npm run dev` | Start the Vite development server |
+| `frontend/` or `admin/` | `npm run build` | Create a production build in `dist/` |
+| `frontend/` or `admin/` | `npm run preview` | Preview the production build locally |
+| `frontend/` or `admin/` | `npm run lint` | Run ESLint |
+| `backend/` | `npm run server` | Start the API with nodemon |
+| `backend/` | `npm start` | Start the API with Node.js |
+
+## API overview
+
+The API is served from the backend base URL and exposes:
+
+- `/api/auth` — registration, login, logout, and authentication checks
+- `/api/product` — public product listing/details and protected product administration
+- `/api/cart` — authenticated cart operations
+- `/api/order` — order creation, history, cancellation, and protected order administration
+- `/api/user` — user data and administration
+
+Authentication uses cookies, so the frontend and admin development origins must match the backend CORS settings.
+
+## Production builds
+
+Build each Vite app from its own directory:
+
 ```bash
 cd frontend
 npm run build
 ```
 
-Then publish the generated `dist` folder to a static hosting platform such as Vercel, Netlify, or GitHub Pages.
+```bash
+cd admin
+npm run build
+```
+
+Each build is written to that app's `dist/` directory. Deploy the backend and each frontend separately, set each frontend's `VITE_BACKEND_URL` to the deployed API URL, and set the backend's `VITE_FRONTEND_URL` and `VITE_ADMIN_URL` to the deployed frontend origins. Configure production credentials through the hosting provider's environment settings rather than committing `.env` files.
 
 ## License
 
-This project does not currently have a license assigned.
-
-## Notes
-
-This repository currently focuses on the frontend storefront. Additional features such as a backend API, authentication, and database support can be added as the project grows.
-````
+No license is currently specified for this project.
