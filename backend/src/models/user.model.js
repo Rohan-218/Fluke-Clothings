@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema({
         minlength: [8, "Password must be at least 8 characters long"],
         select: false
     },
+    resetPasswordToken: {
+        type: String,
+        default: undefined,
+        select: false,
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
     cartData: {
         type: Object,
         default: {}

@@ -29,16 +29,21 @@ export const sendWelcomeEmail = (email, name) =>
     `,
   });
 
-export const sendPasswordResetEmail = (email, resetUrl) =>
+export const sendResetPasswordEmail = (email, name, resetUrl) =>
   sendEmail({
     to: email,
     subject: "Reset your Fluke password",
-    text: `Reset your password using this link: ${resetUrl}`,
+    text: `Hi ${name}, use this link to reset your Fluke password: ${resetUrl}. This link expires in 15 minutes. If you did not request this, you can ignore this email.`,
     html: `
-      <h2>Password reset</h2>
-      <p>Click below to reset your password.</p>
-      <a href="${resetUrl}">Reset password</a>
-      <p>If you didn't request this, ignore this email.</p>
+      <h2>Reset your Fluke password</h2>
+      <p>Hi ${name},</p>
+      <p>We received a request to reset your password.</p>
+      <p>
+        <a href="${resetUrl}">Reset my password</a>
+      </p>
+      <p>This link expires in 15 minutes.</p>
+      <p>If you did not request a password reset, you can ignore this email.</p>
+      <p>Team Fluke</p>
     `,
   });
 

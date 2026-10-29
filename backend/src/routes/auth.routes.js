@@ -23,6 +23,18 @@ authRouter.post("/login", authController.userLoginController);
 authRouter.post("/logout", authController.userLogoutController);
 
 /**
+ * @route POST /api/auth/forgot-password
+ * @desc Controller for forgot password api
+ */
+authRouter.post("/forgot-password", authController.forgotPasswordController);
+
+/**
+ * @route POST /api/auth/reset-password/:token
+ * @desc Controller to reset-password
+ */
+authRouter.post("/reset-password/:token", authController.resetPasswordController);
+
+/**
  * @route GET /api/auth/me
  * @desc Check whether the user is authenticated
  */
