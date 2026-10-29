@@ -26,13 +26,6 @@ authRouter.post("/logout", authController.userLogoutController);
  * @route GET /api/auth/me
  * @desc Check whether the user is authenticated
  */
-authRouter.get("/me", authMiddleware.authMiddleware,
-  (req, res) => {
-    res.status(200).json({
-      success: true,
-      message: "User is authenticated",
-    });
-  }
-);
+authRouter.get("/me", authMiddleware.authMiddleware, authController.getCurrentUserController);
 
 export default authRouter;

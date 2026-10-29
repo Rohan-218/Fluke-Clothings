@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState} from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -22,38 +22,46 @@ const ShopContextProvider = ({ children }) => {
 
   const navigate = useNavigate();
 
-  // Get the authenticated user's cart from the backend
   const fetchUserCart = useCallback(async () => {
     setCartLoading(true);
 
     try {
-      const response = await axios.get(`${backendUrl}/api/cart`, {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        `${backendUrl}/api/cart`,
+        { withCredentials: true }
+      );
 
       if (response.data.success) {
         setCartItems(response.data.cartData || {});
       } else {
-        toast.error(response.data.message || "Failed to load cart");
+        toast.error(
+          response.data.message || "Failed to load cart"
+        );
       }
     } catch (error) {
-      console.error("Fetch cart error:", error);
+      console.error(
+        "Fetch cart error:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+
       toast.error(
-        error.response?.data?.message || "Failed to load your cart"
+        error.response?.data?.message ||
+          "Failed to load your cart"
       );
     } finally {
       setCartLoading(false);
     }
   }, [backendUrl]);
 
-  // Check authentication and load the user's cart
   const checkAuth = useCallback(async () => {
     setAuthLoading(true);
 
     try {
-      const response = await axios.get(`${backendUrl}/api/auth/me`, {
-        withCredentials: true,
-      });
+      const response = await axios.get(
+        `${backendUrl}/api/auth/me`,
+        { withCredentials: true }
+      );
 
       const authenticated = response.data.success === true;
 
@@ -67,20 +75,25 @@ const ShopContextProvider = ({ children }) => {
 
       return authenticated;
     } catch (error) {
+      console.error(
+        "Authentication check failed:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+
       setIsAuthenticated(false);
       setCartItems({});
+
       return false;
     } finally {
       setAuthLoading(false);
     }
   }, [backendUrl, fetchUserCart]);
 
-  // Check login status when the app loads
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -97,8 +110,10 @@ const ShopContextProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Fetch products error:", error);
+
         toast.error(
-          error.response?.data?.message || "Failed to fetch products"
+          error.response?.data?.message ||
+            "Failed to fetch products"
         );
       } finally {
         setProductsLoading(false);
@@ -108,7 +123,6 @@ const ShopContextProvider = ({ children }) => {
     fetchProducts();
   }, [backendUrl]);
 
-  // Add a product and its selected size to the cart
   const addToCart = async (itemId, size) => {
     if (authLoading) {
       toast.info("Checking your login status. Please try again.");
@@ -134,7 +148,9 @@ const ShopContextProvider = ({ children }) => {
       );
 
       if (!response.data.success) {
-        toast.error(response.data.message || "Failed to add product");
+        toast.error(
+          response.data.message || "Failed to add product"
+        );
         return;
       }
 
@@ -147,13 +163,14 @@ const ShopContextProvider = ({ children }) => {
       toast.success("Product added to cart");
     } catch (error) {
       console.error("Add to cart error:", error);
+
       toast.error(
-        error.response?.data?.message || "Failed to add product to cart"
+        error.response?.data?.message ||
+          "Failed to add product to cart"
       );
     }
   };
 
-  // Update quantity or remove a product-size combination
   const updateQuantity = async (itemId, size, quantity) => {
     if (!isAuthenticated) {
       toast.info("Please log in to update your cart.");
@@ -182,7 +199,9 @@ const ShopContextProvider = ({ children }) => {
       );
 
       if (!response.data.success) {
-        toast.error(response.data.message || "Failed to update cart");
+        toast.error(
+          response.data.message || "Failed to update cart"
+        );
         return;
       }
 
@@ -193,13 +212,14 @@ const ShopContextProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Update cart error:", error);
+
       toast.error(
-        error.response?.data?.message || "Failed to update cart"
+        error.response?.data?.message ||
+          "Failed to update cart"
       );
     }
   };
 
-  // Calculate total quantity of all products in the cart
   const getCartCount = () => {
     let totalCount = 0;
 
@@ -212,7 +232,6 @@ const ShopContextProvider = ({ children }) => {
     return totalCount;
   };
 
-  // Calculate cart subtotal
   const getCartAmount = () => {
     let totalAmount = 0;
 
