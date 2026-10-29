@@ -1,7 +1,6 @@
-
 import React, { useContext, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ShopContext } from "../context/ShopContext";
 
@@ -147,14 +146,14 @@ const Login = () => {
       />
 
       <div className="w-full flex justify-between text-sm -mt-2">
-        <p
-          onClick={() =>
-            toast.info("Password recovery is not implemented yet.")
-          }
-          className="cursor-pointer"
-        >
-          Forgot your password?
-        </p>
+        {currentState === "Login" && (
+          <Link
+            to="/forgot-password"
+            className="cursor-pointer hover:underline"
+          >
+            Forgot your password?
+          </Link>
+        )}
 
         {currentState === "Login" ? (
           <p
