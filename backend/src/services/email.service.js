@@ -50,11 +50,14 @@ export const sendResetPasswordEmail = (email, name, resetUrl) =>
 export const sendNewsletterWelcomeEmail = (email) =>
   sendEmail({
     to: email,
-    subject: "Welcome to the Fluke newsletter!",
-    text: "Thanks for subscribing to Fluke updates.",
+    subject: "Welcome to the Fluke Newsletter!",
+    text: "Thanks for subscribing to the Fluke newsletter. You'll receive updates about new arrivals, collections, and offers.",
     html: `
-      <h2>Welcome to the Fluke newsletter!</h2>
-      <p>Thank you for subscribing.</p>
+      <h2>Welcome to Fluke!</h2>
+      <p>Thank you for subscribing to our newsletter.</p>
+      <p>You'll receive updates about new arrivals, collections, and special offers.</p>
+      <p>Happy shopping!</p>
+      <p>Team Fluke</p>
     `,
   });
 
