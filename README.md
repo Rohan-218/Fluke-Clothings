@@ -152,4 +152,6 @@ Each build is written to that app's `dist/` directory. Deploy the backend and ea
 
 ## License
 
-No license is currently specified for this project.
+This project is proprietary and all rights are reserved by the author.
+
+The source code is publicly available for viewing and evaluation purposes only. Copying, modifying, redistributing, or commercially using this code without prior written permission is prohibited.
