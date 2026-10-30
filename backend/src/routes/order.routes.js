@@ -38,14 +38,13 @@ orderRouter.put("/status", authMiddleware.systemAuthMiddleware, orderController.
  * @route GET /api/order/:orderId
  * @desc Get a specific order belonging to authenticated user
  */
-orderRouter.get("/:orderId", authMiddleware.systemAuthMiddleware, orderController.getOrderByIdController);
+orderRouter.get("/:orderId", authMiddleware.authMiddleware, orderController.getOrderByIdController);
 
 /**
  * @route PUT /api/order/delivery-date
  * @desc Update order delivery date
  */
 orderRouter.put("/delivery-date", authMiddleware.systemAuthMiddleware, orderController.updateOrderDeliveryDateController);
-
 
 orderRouter.post("/cashfree/verify", authMiddleware.authMiddleware, orderController.verifyCashfreePaymentController);
 
