@@ -65,7 +65,6 @@ const App = () => {
       <ToastContainer position="top-center" autoClose={3000} />
 
       <Routes>
-        {/* Login Route */}
         <Route
           path="/login"
           element={
@@ -77,7 +76,6 @@ const App = () => {
           }
         />
 
-        {/* Protected Admin Routes */}
         <Route
           path="*"
           element={
@@ -85,17 +83,10 @@ const App = () => {
               <Navigate to="/login" replace />
             ) : (
               <>
-                {/* Fixed Navbar */}
                 <Navbar setIsAuthenticated={setIsAuthenticated} />
-
-                {/* Dashboard Layout */}
-                <div className="flex min-h-screen">
-
-                  {/* Fixed Sidebar */}
                   <Sidebar />
 
-                  {/* Main Content */}
-                  <main className="min-w-0 w-full flex-1 px-3 pt-20 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:px-5 md:pt-6 md:pb-8 lg:ml-65 lg:px-8">
+                  <main className="min-w-0 w-full flex-1 px-3 pt-5 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:px-5 md:pt-6 md:pb-8 lg:ml-65 lg:px-8">
                     <div className="mx-auto w-full max-w-[1600px]">
                       <Routes>
                         <Route path="/" element={<Navigate to="/add" replace />} />
@@ -107,7 +98,6 @@ const App = () => {
                       </Routes>
                     </div>
                   </main>
-                </div>
               </>
             )
           }
