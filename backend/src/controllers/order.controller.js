@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 import orderModel from "../models/order.model.js";
 import productModel from "../models/product.model.js";
 import cashfree from "../config/cashfree.js";
@@ -214,7 +215,8 @@ const createOrderController = async (req, res) => {
             customer_phone: cashfreeCustomerPhone,
           },
           order_meta: {
-            return_url: `${frontendUrl.replace(/\/$/, "")}/orders?order_id={order_id}`,
+            return_url: `${frontendUrl.replace(/\/$/, "")}/payment-return?order_id={order_id}`,
+            notify_url: `${process.env.BACKEND_URL}/api/order/cashfree/webhook`,
           },
         };
 
@@ -794,6 +796,135 @@ const updateOrderDeliveryDateController = async (req, res) => {
   }
 };
 
+/**
+ * @route POST /api/order/cashfree/webhook
+ * @desc Receive and verify Cashfree payment notifications
+ */
+const cashfreeWebhookController = async (req, res) => {
+
+  console.log("========== CASHFREE WEBHOOK RECEIVED ==========");
+
+  console.log({
+    hasSignature: Boolean(req.headers["x-webhook-signature"]),
+    hasTimestamp: Boolean(req.headers["x-webhook-timestamp"]),
+    hasRawBody: typeof req.rawBody === "string",
+    rawBodyLength: req.rawBody?.length,
+  });
+  try {
+    const signature = req.headers["x-webhook-signature"];
+    const timestamp = req.headers["x-webhook-timestamp"];
+    const rawBody = req.rawBody;
+
+    if (!signature || !timestamp || typeof rawBody !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid webhook request",
+      });
+    }
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.CASHFREE_CLIENT_SECRET)
+      .update(timestamp + rawBody)
+      .digest("base64");
+
+    const receivedBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    if (
+      receivedBuffer.length !== expectedBuffer.length ||
+      !crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid webhook signature",
+      });
+    }
+
+    const event = JSON.parse(rawBody);
+
+    if (event.type !== "PAYMENT_SUCCESS_WEBHOOK") {
+      return res.status(200).json({
+        success: true,
+        message: "Webhook received; no payment update required",
+      });
+    }
+
+    const orderId = event.data?.order?.order_id;
+    const payment = event.data?.payment;
+
+    if (
+      !orderId ||
+      !mongoose.isValidObjectId(orderId) ||
+      payment?.payment_status !== "SUCCESS"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment event",
+      });
+    }
+
+    const order = await orderModel.findOne({
+      _id: orderId,
+      paymentMethod: "cashfree",
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Local order not found",
+      });
+    }
+
+    const paymentAmount = Number(payment.payment_amount);
+    const orderAmount = Number(order.total);
+    const currency = payment.payment_currency ||
+      event.data?.order?.order_currency;
+
+    if (
+      !Number.isFinite(paymentAmount) ||
+      !Number.isFinite(orderAmount) ||
+      paymentAmount.toFixed(2) !== orderAmount.toFixed(2) ||
+      currency !== "INR"
+    ) {
+      console.error(
+        "Cashfree webhook payment mismatch:",
+        orderId
+      );
+
+      return res.status(409).json({
+        success: false,
+        message: "Payment details do not match the order",
+      });
+    }
+
+    await orderModel.updateOne(
+      {
+        _id: orderId,
+        paymentMethod: "cashfree",
+        total: order.total,
+        paymentStatus: { $ne: "Paid" },
+      },
+      {
+        $set: {
+          paymentStatus: "Paid",
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment notification processed",
+    });
+  } catch (error) {
+    console.error("Cashfree webhook error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Webhook processing failed",
+    });
+  }
+};
+
 export {
   createOrderController,
   verifyCashfreePaymentController,
@@ -803,4 +934,5 @@ export {
   cancelOrderController,
   updateOrderStatusController,
   updateOrderDeliveryDateController,
+  cashfreeWebhookController
 };

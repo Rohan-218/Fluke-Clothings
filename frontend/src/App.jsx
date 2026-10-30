@@ -14,6 +14,7 @@ import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import PaymentReturn from "./pages/PaymentReturn";
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -22,6 +23,8 @@ import SearchBar from './components/SearchBar';
 const App = () => {
 
   const { pathname } = useLocation();
+
+  const isPaymentReturnPage = pathname === "/payment-return";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -41,10 +44,15 @@ const App = () => {
   }, []);
 
   return (
-    <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
+    <div className={isPaymentReturnPage ? "min-h-screen" : "px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]"}>
       <ToastContainer position="top-right" autoClose={3000} />
-      <Navbar />
-      <SearchBar />
+
+      {!isPaymentReturnPage && (
+        <>
+          <Navbar />
+          <SearchBar />
+        </>
+      )}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -59,9 +67,10 @@ const App = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/payment-return" element={<PaymentReturn />} />
       </Routes>
 
-      <Footer />
+      {!isPaymentReturnPage && <Footer />}
     </div>
   );
 };

@@ -49,4 +49,6 @@ orderRouter.put("/delivery-date", authMiddleware.systemAuthMiddleware, orderCont
 
 orderRouter.post("/cashfree/verify", authMiddleware.authMiddleware, orderController.verifyCashfreePaymentController);
 
+orderRouter.post("/cashfree/webhook", orderController.cashfreeWebhookController);
+
 export default orderRouter;

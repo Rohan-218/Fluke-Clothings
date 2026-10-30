@@ -37,7 +37,15 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, res, buffer) => {
+      if (req.originalUrl === "/api/order/cashfree/webhook") {
+        req.rawBody = buffer.toString("utf8");
+      }
+    },
+  })
+);
 app.use(cookieParser());
 
 app.get("/", (req, res) => {

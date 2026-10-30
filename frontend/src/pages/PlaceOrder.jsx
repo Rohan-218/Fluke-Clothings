@@ -51,6 +51,39 @@ const PlaceOrder = () => {
     }
   };
 
+  const waitForPaymentConfirmation = async (orderId) => {
+    const maxAttempts = 40;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const response = await axios.post(
+          `${backendUrl}/api/order/cashfree/verify`,
+          { orderId },
+          { withCredentials: true }
+        );
+
+        if (response.data.success && response.data.paid) {
+          return true;
+        }
+      } catch (error) {
+        console.error(
+          "Payment status check error:",
+          error.response?.data || error.message
+        );
+
+        if ([400, 401, 403, 404].includes(error.response?.status)) {
+          throw error;
+        }
+      }
+
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+
+    return false;
+  };
+
   const onSubmitHandler = async (event) => {
     event.preventDefault();
 
@@ -132,7 +165,7 @@ const PlaceOrder = () => {
 
         const checkoutResult = await cashfree.checkout({
           paymentSessionId,
-          redirectTarget: "_self",
+          redirectTarget: "_modal",
         });
 
         if (checkoutResult?.error) {
@@ -144,6 +177,26 @@ const PlaceOrder = () => {
           toast.error(
             "Unable to open Cashfree Checkout. Please try again."
           );
+
+          return;
+        }
+
+        toast.info("Checking your payment status...");
+
+        const paymentSuccessful =
+          await waitForPaymentConfirmation(orderId);
+
+        if (paymentSuccessful) {
+          await clearCart();
+
+          toast.success("Payment successful! Your order is confirmed.");
+          navigate("/orders");
+        } else {
+          toast.info(
+            "Payment is not confirmed yet. You can check your payment status in My Orders."
+          );
+
+          navigate("/orders");
         }
 
         return;
@@ -217,7 +270,7 @@ const PlaceOrder = () => {
           </div>
 
           <div className="w-full text-end mt-8">
-            <button type="submit" disabled={loading} className="bg-black text-white px-16 py-3 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{loading ? method === "cashfree" ? "OPENING CHECKOUT..." : "PLACING ORDER..." : method === "cashfree" ? "PROCEED TO PAYMENT" : "PLACE ORDER"}</button>
+            <button type="submit" disabled={loading} className="bg-black text-white px-16 py-3 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{loading ? method === "cashfree" ? "PROCESSING PAYMENT..." : "PLACING ORDER..." : method === "cashfree" ? "PROCEED TO PAYMENT" : "PLACE ORDER"}</button>
           </div>
         </div>
       </div>

@@ -6,13 +6,13 @@ import { ShopContext } from "../context/ShopContext";
 import Title from "../components/Title";
 
 const Orders = () => {
-  const { currency, backendUrl } = useContext(ShopContext);
+  const { currency, backendUrl, cartItems, updateQuantity, setCartItems } = useContext(ShopContext);
   const location = useLocation();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingOrder, setCancellingOrder] = useState(null);
-  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -32,14 +32,31 @@ const Orders = () => {
     }
   };
 
-  const verifyPayment = async (orderId) => {
+  const clearCart = async () => {
+    for (const productId of Object.keys(cartItems || {})) {
+      for (const size of Object.keys(cartItems[productId] || {})) {
+        await updateQuantity(productId, size, 0);
+      }
+    }
+
+    if (setCartItems) {
+      setCartItems({});
+    }
+  };
+
+  const verifyPayment = async (orderId, clearCartOnSuccess = false) => {
     try {
-      setVerifyingPayment(true);
+      setVerifyingPayment(orderId);
 
       const response = await axios.post(`${backendUrl}/api/order/cashfree/verify`, { orderId }, { withCredentials: true });
 
       if (response.data.success === true && response.data.paid === true) {
         toast.success("Payment successful!");
+
+        if (clearCartOnSuccess) {
+          await clearCart();
+        }
+
         await fetchOrders();
 
         const params = new URLSearchParams(location.search);
@@ -55,7 +72,7 @@ const Orders = () => {
       toast.error(error.response?.data?.message || "Unable to verify payment right now. Please check your orders again.");
       await fetchOrders();
     } finally {
-      setVerifyingPayment(false);
+      setVerifyingPayment(null);
     }
   };
 
@@ -91,7 +108,7 @@ const Orders = () => {
     const orderId = params.get("order_id");
 
     if (orderId) {
-      verifyPayment(orderId);
+      verifyPayment(orderId, true);
     }
   }, [location.search, backendUrl]);
 
@@ -138,6 +155,12 @@ const Orders = () => {
                   <p className="text-sm text-gray-500">Order Status</p>
                   <span className={`mt-1 inline-block rounded px-3 py-1 text-sm font-medium ${getStatusStyle(order.status || "Order Placed")}`}>{order.status || "Order Placed"}</span>
                   <p className="mt-2 text-sm text-gray-500">Payment: {order.paymentStatus || "Pending"}</p>
+
+                  {order.paymentMethod?.toLowerCase() === "cashfree" && order.paymentStatus !== "Paid" && order.status !== "Cancelled" && (
+                    <button type="button" onClick={() => verifyPayment(order._id)} disabled={verifyingPayment !== null} className="mt-2 rounded border border-black px-3 py-1.5 text-xs font-medium hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">
+                      {verifyingPayment === order._id ? "Checking..." : "Check Payment"}
+                    </button>
+                  )}
 
                   {/* Estimated delivery date */}
                   {order.status === "Cancelled" ? (
