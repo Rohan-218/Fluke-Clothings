@@ -86,7 +86,7 @@ const App = () => {
                 <Navbar setIsAuthenticated={setIsAuthenticated} />
                   <Sidebar />
 
-                  <main className="min-w-0 w-full flex-1 px-3 pt-5 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:px-5 md:pt-6 md:pb-8 lg:ml-65 lg:px-8">
+                  <main className="min-w-0 w-full flex-1 px-3 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:w-[calc(100%-15rem)] md:px-5 md:pt-8 md:pb-8 lg:ml-[260px] lg:w-[calc(100%-260px)] lg:px-8">
                     <div className="mx-auto w-full max-w-[1600px]">
                       <Routes>
                         <Route path="/" element={<Navigate to="/add" replace />} />

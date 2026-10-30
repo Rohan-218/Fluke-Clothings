@@ -319,7 +319,7 @@ const Add = () => {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-[#f7f7f7] px-3 py-4 sm:px-5 lg:px-7">
+    <div className="w-full bg-[#f7f7f7] px-3 py-4 sm:px-5 lg:px-7">
 
       <div className="mx-auto max-w-6xl">
 

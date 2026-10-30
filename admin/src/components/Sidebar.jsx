@@ -13,7 +13,7 @@ const Sidebar = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block fixed left-0 top-16 bottom-0 z-40 w-60 shrink-0 border-r border-gray-200 bg-white lg:w-65">
+      <aside className="hidden md:block fixed left-0 top-16 bottom-0 z-40 w-60 border-r border-gray-200 bg-white lg:w-[260px]">
         <div className="flex h-full flex-col overflow-y-auto px-4 py-7 lg:px-5">
 
           {/* Sidebar Header */}
