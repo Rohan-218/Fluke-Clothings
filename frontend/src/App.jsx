@@ -50,6 +50,7 @@ const App = () => {
       {!isPaymentReturnPage && (
         <>
           <Navbar />
+          <div className="h-17 sm:hidden"></div>
           <SearchBar />
         </>
       )}

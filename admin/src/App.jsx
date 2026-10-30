@@ -25,6 +25,7 @@ const App = () => {
         await axios.get(`${backendUrl}/api/auth/me`, {
           withCredentials: true,
         });
+
         setIsAuthenticated(true);
       } catch (error) {
         setIsAuthenticated(false);
@@ -62,6 +63,7 @@ const App = () => {
       <ToastContainer position="top-center" autoClose={3000} />
 
       <Routes>
+        {/* Login Route */}
         <Route
           path="/login"
           element={
@@ -73,6 +75,7 @@ const App = () => {
           }
         />
 
+        {/* Protected Admin Routes */}
         <Route
           path="*"
           element={
@@ -80,13 +83,17 @@ const App = () => {
               <Navigate to="/login" replace />
             ) : (
               <>
+                {/* Fixed Navbar */}
                 <Navbar setIsAuthenticated={setIsAuthenticated} />
-                <hr className="border-gray-200" />
 
-                <div className="flex min-h-[calc(100vh-1px)]">
+                {/* Dashboard Layout */}
+                <div className="flex min-h-screen">
+
+                  {/* Fixed Sidebar */}
                   <Sidebar />
 
-                  <main className="min-w-0 flex-1 px-3 pb-24 pt-4 text-base text-gray-600 sm:px-5 md:px-5 md:pb-8 md:pt-6 lg:px-8">
+                  {/* Main Content */}
+                  <main className="min-w-0 w-full flex-1 px-3 pt-20 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:px-5 md:pt-6 md:pb-8 lg:ml-65 lg:px-8">
                     <div className="mx-auto w-full max-w-[1600px]">
                       <Routes>
                         <Route path="/" element={<Navigate to="/add" replace />} />
@@ -94,10 +101,7 @@ const App = () => {
                         <Route path="/list" element={<List />} />
                         <Route path="/orders" element={<Orders />} />
                         <Route path="/users" element={<Users />} />
-                        <Route
-                          path="*"
-                          element={<Navigate to="/add" replace />}
-                        />
+                        <Route path="*" element={<Navigate to="/add" replace />} />
                       </Routes>
                     </div>
                   </main>
