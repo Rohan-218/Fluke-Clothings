@@ -38,7 +38,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (import.meta.env.PROD) {
+    if (import.meta.env.PROD && !sessionStorage.getItem("server-wakeup")) {
       toast.info(
         "Our server may take up to 50 seconds to respond after inactivity. This happens because our free hosting service (Render) temporarily puts the server to sleep when it isn't being used. Please wait while it wakes up. Thank you for your patience!",
         {
@@ -47,6 +47,8 @@ const App = () => {
           toastId: "server-wakeup",
         }
       );
+
+      sessionStorage.setItem("server-wakeup", "shown");
     }
   }, []);
 
