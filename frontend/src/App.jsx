@@ -27,6 +27,19 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      toast.info(
+        "Our server may take up to 50 seconds to respond after a period of inactivity. This happens because our free hosting service (Render) temporarily puts the server to sleep when it's not being used. Please wait while it wakes up. Thank you for your patience!",
+        {
+          autoClose: 7000,
+          position: "top-center",
+          toastId: "server-wakeup"
+        }
+      );
+    }
+  }, []);
+
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
       <ToastContainer position="top-right" autoClose={3000} />

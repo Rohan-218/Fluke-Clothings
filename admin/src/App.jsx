@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 
 import Navbar from "./components/Navbar";
@@ -34,6 +34,19 @@ const App = () => {
     };
 
     checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      toast.info(
+        "Our server may take up to 50 seconds to respond after inactivity. This happens because our free hosting service (Render) temporarily puts the server to sleep when it isn't being used. Please wait while it wakes up. Thank you for your patience!",
+        {
+          autoClose: 7000,
+          position: "top-center",
+          toastId: "server-wakeup",
+        }
+      );
+    }
   }, []);
 
   if (checkingAuth) {
@@ -76,10 +89,7 @@ const App = () => {
                   <main className="min-w-0 flex-1 px-3 pb-24 pt-4 text-base text-gray-600 sm:px-5 md:px-5 md:pb-8 md:pt-6 lg:px-8">
                     <div className="mx-auto w-full max-w-[1600px]">
                       <Routes>
-                        <Route
-                          path="/"
-                          element={<Navigate to="/add" replace />}
-                        />
+                        <Route path="/" element={<Navigate to="/add" replace />} />
                         <Route path="/add" element={<Add />} />
                         <Route path="/list" element={<List />} />
                         <Route path="/orders" element={<Orders />} />
