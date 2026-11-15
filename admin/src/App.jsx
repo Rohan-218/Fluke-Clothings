@@ -19,26 +19,12 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // Show server wake-up notification immediately
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await axios.get(`${backendUrl}/api/auth/me`, {
-          withCredentials: true,
-        });
-
-        setIsAuthenticated(true);
-      } catch (error) {
-        setIsAuthenticated(false);
-      } finally {
-        setCheckingAuth(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (import.meta.env.PROD && !sessionStorage.getItem("server-wakeup")) {
+    if (
+      import.meta.env.PROD &&
+      !sessionStorage.getItem("server-wakeup")
+    ) {
       toast.info(
         "Our server may take up to 50 seconds to respond after inactivity. This happens because our free hosting service (Render) temporarily puts the server to sleep when it isn't being used. Please wait while it wakes up. Thank you for your patience!",
         {
@@ -52,57 +38,82 @@ const App = () => {
     }
   }, []);
 
-  if (checkingAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 text-center text-sm text-gray-600 sm:text-base">
-        Checking authentication...
-      </div>
-    );
-  }
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await axios.get(`${backendUrl}/api/auth/me`, {
+          withCredentials: true,
+          timeout: 60000,
+        });
+
+        setIsAuthenticated(true);
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* ToastContainer stays mounted even during authentication checking */}
       <ToastContainer position="top-center" autoClose={3000} />
 
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/add" replace />
-            ) : (
-              <Login setIsAuthenticated={setIsAuthenticated} />
-            )
-          }
-        />
+      {checkingAuth ? (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 text-center text-sm text-gray-600 sm:text-base">
+          Checking authentication...
+        </div>
+      ) : (
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              isAuthenticated ? (
+                <Navigate to="/add" replace />
+              ) : (
+                <Login setIsAuthenticated={setIsAuthenticated} />
+              )
+            }
+          />
 
-        <Route
-          path="*"
-          element={
-            !isAuthenticated ? (
-              <Navigate to="/login" replace />
-            ) : (
-              <>
-                <Navbar setIsAuthenticated={setIsAuthenticated} />
+          <Route
+            path="*"
+            element={
+              !isAuthenticated ? (
+                <Navigate to="/login" replace />
+              ) : (
+                <>
+                  <Navbar setIsAuthenticated={setIsAuthenticated} />
                   <Sidebar />
 
-                  <main className="min-w-0 w-full flex-1 px-3 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:w-[calc(100%-15rem)] md:px-5 md:pt-8 md:pb-8 lg:ml-[260px] lg:w-[calc(100%-260px)] lg:px-8">
+                  <main className="min-w-0 w-full flex-1 px-3 pb-24 text-base text-gray-600 sm:px-5 md:ml-60 md:w-[calc(100%-15rem)] md:px-5 md:pt-8 md:pb-8 lg:ml-65 lg:w-[calc(100%-260px)] lg:px-8">
                     <div className="mx-auto w-full max-w-[1600px]">
                       <Routes>
-                        <Route path="/" element={<Navigate to="/add" replace />} />
+                        <Route
+                          path="/"
+                          element={<Navigate to="/add" replace />}
+                        />
                         <Route path="/add" element={<Add />} />
                         <Route path="/list" element={<List />} />
                         <Route path="/orders" element={<Orders />} />
                         <Route path="/users" element={<Users />} />
-                        <Route path="*" element={<Navigate to="/add" replace />} />
+                        <Route
+                          path="*"
+                          element={<Navigate to="/add" replace />}
+                        />
                       </Routes>
                     </div>
                   </main>
-              </>
-            )
-          }
-        />
-      </Routes>
+                </>
+              )
+            }
+          />
+        </Routes>
+      )}
     </div>
   );
 };
