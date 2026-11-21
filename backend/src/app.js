@@ -52,7 +52,7 @@ app.get("/", (req, res) => {
   res.status(200).send("API IS WORKING");
 });
 
-app.get("/health", (req, res) => {
+app.get("/api/health", (req, res) => {
   const isDatabaseConnected = mongoose.connection.readyState === 1;
 
   res.status(isDatabaseConnected ? 200 : 503).json({
